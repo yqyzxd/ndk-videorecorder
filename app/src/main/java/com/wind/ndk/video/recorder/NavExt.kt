@@ -1,6 +1,7 @@
 package com.wind.ndk.video.recorder
 
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavOptions
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.Navigator
@@ -46,4 +47,17 @@ fun <T> NavController.navigateForResult(
 ){
     setNavResultCallback(callback)
     navigate(route,builder)
+}
+
+fun NavController.navigateSingleTopTo(
+    route:String,
+    startDestination:String=this@navigateSingleTopTo.graph.findStartDestination().route?:""
+){
+    navigate(route){
+        popUpTo(startDestination){
+            saveState =true
+        }
+        launchSingleTop=true
+        restoreState=true
+    }
 }

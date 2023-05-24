@@ -8,7 +8,7 @@
 #include "gles/gl_shaders.h"
 #include "egl/gl_renderer.h"
 #include "camera_filter.h"
-#include "../camera_preview_scheduler_caller.h"
+#include "camera_preview_scheduler_caller.h"
 #include "gles/texture.h"
 #include "screen_filter.h"
 #include "gles/gl_utils.h"

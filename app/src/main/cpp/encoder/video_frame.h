@@ -10,18 +10,58 @@
 
 #include <cstdint>
 #include "../utils/types.h"
+#include "soft/x264_parser.h"
 
 
 class VideoFrame {
 public:
-    VideoFrame();
-    ~VideoFrame();
+    VideoFrame(){
+        buffer= nullptr;
+        size=0;
+        timeInMills=0;
+    };
+    ~VideoFrame(){
+        if (buffer){
+            delete buffer;
+            buffer= nullptr;
+        }
+    };
 public:
-  byte* buffer;
-  int size;
-  int timeInMills;
-  int64_t pts;
-  int64_t dts;
+    byte* buffer;
+    int size;
+    int64_t timeInMills;
+};
+
+
+class VideoPacket {
+public:
+    VideoPacket(){
+        buffer= nullptr;
+        size=0;
+        timeInMills=0;
+        pts=PTS_NONE_FLAG;
+        dts=DTS_NONE_FLAG;
+    };
+    ~VideoPacket(){
+        if (buffer){
+            delete buffer;
+            buffer= nullptr;
+        }
+    };
+    int getNALUType(){
+        int nalu_type = NALU_TYPE_NON_IDR;
+        if(NULL != buffer){
+            nalu_type = (buffer[4] & 0x1F);
+        }
+        return nalu_type;
+    }
+public:
+    byte* buffer;
+    int size;
+    int64_t timeInMills;
+    int duration;
+    int64_t pts;
+    int64_t dts;
 };
 
 

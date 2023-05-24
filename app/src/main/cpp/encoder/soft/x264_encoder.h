@@ -9,6 +9,9 @@
 #include "../video_frame.h"
 #include <stdio.h>
 #include "../../utils/log.h"
+#include "x264_parser.h"
+#include "../../video_packet_pool.h"
+
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
@@ -31,8 +34,14 @@ private:
     AVCodecContext* mAVCodecContext= nullptr;
     AVFrame* mAVFrame= nullptr;
     AVFrame* mYUY2Frame= nullptr;
+    AVPacket* mAvPacket;
+    //比特率模式 值为 vbr/cbr
+    const char* mBitrateMode;
+    VideoPacketPool* mVideoPacketPool=0;
 
-   AVPacket* mAvPacket;
+
+    X264Parser* mX264Parser;
+    bool mAlreadyWriteSPS;
 
 };
 

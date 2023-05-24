@@ -127,7 +127,6 @@ void SoftVideoEncoderAdapter::stop() {
         mGLOffScreenSurface->dealloc();
         mGLOffScreenSurface= nullptr;
     }
-    LOGE("mVideoFrameQueue stop");
     if (mVideoFrameQueue!= nullptr){
         mVideoFrameQueue->flush();
         if (mEncodeThread != nullptr) {
@@ -148,11 +147,6 @@ void SoftVideoEncoderAdapter::stop() {
         mCopyLock = nullptr;
     }
 
-
-    //todo 清空videoFrameQueue
-    //如何判断模板是指针还是对象
-
-
 }
 
 void SoftVideoEncoderAdapter::dealloc() {
@@ -168,7 +162,7 @@ void SoftVideoEncoderAdapter::onRenderFinish(void *buffer) {
     videoFrame->buffer = static_cast<byte *>(buffer);
     videoFrame->size = mByteSize;
     videoFrame->timeInMills = currentTimeMills() - mStartTimeInMills;
-    LOGI("before videoFrame enqueue timeInMills:%d",videoFrame->timeInMills);
+    LOGI("before videoFrame enqueue timeInMills:%ld",videoFrame->timeInMills);
     mVideoFrameQueue->put(videoFrame);
     LOGI("after videoFrame enqueue");
     LOGE("mCopyCond signal");

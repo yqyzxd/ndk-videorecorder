@@ -2,7 +2,7 @@
 // Created by 史浩 on 2023/5/5.
 //
 #include "com_wind_ndk_camera_CameraPreviewScheduler.h"
-#include "camera_preview_controller.h"
+#include "../camera_preview/camera_preview_controller.h"
 #include <jni.h>
 #include <android/native_window_jni.h>
 

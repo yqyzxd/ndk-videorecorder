@@ -29,8 +29,17 @@ public:
      * @return
      */
     virtual int take(T* elem)=0;
-
+    /**
+     * Retrieves, but does not remove, the head of this queue, or returns null if this queue is empty.
+     * @param elem
+     * @return
+     */
+    virtual int peek(T* elem)=0;
     virtual void flush()=0;
+
+    int size(){
+        return mSize;
+    }
 
 protected:
     int mCapacity;
@@ -106,6 +115,16 @@ public:
         mLock->unlock();
         return 0;
     }
+    int peek(T *elem)override{
+        mLock->lock();
+        if (this->mSize<=0){
+            *elem= nullptr;
+        }else{
+            *elem=head->item;
+        }
+        mLock->lock();
+        return 0;
+    }
     //todo 清空队列
     void flush() override{
         mLock->lock();
@@ -114,7 +133,8 @@ public:
         mCond->signal();
         mLock->unlock();
     }
-private:
+
+protected:
     Lock* mLock;
     Condition* mCond;
 

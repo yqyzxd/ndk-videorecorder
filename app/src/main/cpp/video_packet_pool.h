@@ -1,0 +1,34 @@
+//
+// Created by wind on 2023/5/24.
+//
+
+#ifndef NDK_VIDEORECORDER_VIDEO_PACKET_POOL_H
+#define NDK_VIDEORECORDER_VIDEO_PACKET_POOL_H
+
+
+#include "encoder/video_frame.h"
+#include "libs/blocking_queue/blocking_queue.h"
+#include "utils/log.h"
+#define THRESHOLD_VIDEO_PACKET_QUEUE 60
+#define LOG_TAG "VideoPacketPool"
+class VideoPacketPool {
+public:
+    VideoPacketPool();
+    ~VideoPacketPool();
+
+    int enqueueVideoPacket(VideoPacket* packet);
+    int getVideoPacketQueueSize();
+    int abortVideoPacketQueue();
+    int getVideoPacket(VideoPacket** packet);
+
+private:
+    BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
+
+
+    bool detectDiscardVideoPacket();
+
+    int discardVideoGOP(int *countOfDiscardPackets, int *durationOfDiscardPackets);
+};
+
+
+#endif //NDK_VIDEORECORDER_VIDEO_PACKET_POOL_H

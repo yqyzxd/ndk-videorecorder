@@ -30,22 +30,23 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        com_wind_ndk_camera_CameraPreviewScheduler.cpp
-        camera_preview_controller.cpp
+        jni/com_wind_ndk_camera_CameraPreviewScheduler.cpp
+        camera_preview/camera_preview_controller.cpp
         camera_preview/camera_filter.cpp
         camera_preview/preview_renderer.cpp
         camera_preview/screen_filter.cpp
 
-        camera_preview_scheduler_caller.cpp
+        camera_preview/camera_preview_scheduler_caller.cpp
         camera_preview/camera_info.cpp
 
-        encoder/video_frame.cpp
         encoder/video_encoder_adapter.cpp
         encoder/soft/soft_video_encoder_adapter.cpp
         encoder/soft/x264_encoder.cpp
         encoder/soft/copy_texture_renderer.cpp
 
-        encoder/soft/color_conversion/color_conversion_armv7a.cpp
+        encoder/soft/x264_parser.cpp
+
+        video_packet_pool.cpp
         )
 
 

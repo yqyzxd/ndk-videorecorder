@@ -7,8 +7,8 @@
 
 #include <jni.h>
 #include <GLES2/gl2.h>
-#include "utils/log.h"
-#include "camera_preview/camera_info.h"
+#include "../utils/log.h"
+#include "camera_info.h"
 
 class CameraPreviewSchedulerCaller {
 public:
