@@ -162,7 +162,7 @@ void SoftVideoEncoderAdapter::onRenderFinish(void *buffer) {
     videoFrame->buffer = static_cast<byte *>(buffer);
     videoFrame->size = mByteSize;
     videoFrame->timeInMills = currentTimeMills() - mStartTimeInMills;
-    LOGI("before videoFrame enqueue timeInMills:%ld",videoFrame->timeInMills);
+    LOGI("before videoFrame enqueue timeMills:%ld",videoFrame->timeInMills);
     mVideoFrameQueue->put(videoFrame);
     LOGI("after videoFrame enqueue");
     LOGE("mCopyCond signal");

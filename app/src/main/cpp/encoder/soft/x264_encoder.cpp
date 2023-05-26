@@ -177,7 +177,7 @@ int X264Encoder::encode(VideoFrame *frame) {
             videoPacket->buffer = mAvPacket->data;
             videoPacket->size = mAvPacket->size;
             //int presentationTimeMills = mAvPacket->pts;
-            videoPacket->timeInMills = mAvPacket->pts;
+            videoPacket->timeMills = mAvPacket->pts;
             mVideoPacketPool->enqueueVideoPacket(videoPacket);
 
             //解析mAvPacket->data h264数据

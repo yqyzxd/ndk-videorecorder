@@ -38,7 +38,7 @@ public:
     VideoPacket(){
         buffer= nullptr;
         size=0;
-        timeInMills=0;
+        timeMills=0;
         pts=PTS_NONE_FLAG;
         dts=DTS_NONE_FLAG;
     };
@@ -58,7 +58,7 @@ public:
 public:
     byte* buffer;
     int size;
-    int64_t timeInMills;
+    int64_t timeMills;
     int duration;
     int64_t pts;
     int64_t dts;

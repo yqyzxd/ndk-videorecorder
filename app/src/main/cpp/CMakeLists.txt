@@ -47,6 +47,10 @@ add_library( # Sets the name of the library.
         encoder/soft/x264_parser.cpp
 
         video_packet_pool.cpp
+
+        com_wind_ndk_camera_VideoRecorder.cpp
+        video_consumer.cpp
+        video_publisher.cpp
         )
 
 

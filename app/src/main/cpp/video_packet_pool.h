@@ -15,15 +15,18 @@ class VideoPacketPool {
 public:
     VideoPacketPool();
     ~VideoPacketPool();
+    static VideoPacketPool* instance;//单例模式
 
     int enqueueVideoPacket(VideoPacket* packet);
     int getVideoPacketQueueSize();
     int abortVideoPacketQueue();
     int getVideoPacket(VideoPacket** packet);
 
+
+    static VideoPacketPool* getInstance();
 private:
     BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
-
+    VideoPacket* mCurVideoPacket=0;
 
     bool detectDiscardVideoPacket();
 

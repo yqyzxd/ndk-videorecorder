@@ -5,12 +5,18 @@
 #include "video_packet_pool.h"
 
 
+
 VideoPacketPool::VideoPacketPool() {
     mVideoPktQueue = new LinkedBlockingQueue<VideoPacket*>();
 }
 
 VideoPacketPool::~VideoPacketPool() {}
 
+VideoPacketPool* VideoPacketPool::instance=new VideoPacketPool();
+
+VideoPacketPool *VideoPacketPool::getInstance() {
+    return instance;
+}
 
 int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
     if (mVideoPktQueue != nullptr) {
@@ -25,10 +31,13 @@ int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
                 //discard error
             }
             LOGI("discard packets :%d,duration:%d",countOfDiscardPackets,durationOfDiscardPackets);
-        }else{
-
-
         }
+        if (mCurVideoPacket!= nullptr){
+            int duration= packet->timeMills - mCurVideoPacket->timeMills;
+            mCurVideoPacket->duration=duration;
+            mVideoPktQueue->put(mCurVideoPacket);
+        }
+        mCurVideoPacket=packet;
     }
 
     return 0;
@@ -57,11 +66,11 @@ int VideoPacketPool::discardVideoGOP(int *countOfDiscardPackets, int *durationOf
                 *durationOfDiscardPackets+=videoPacket->duration;
             }
         }else{
-            ret= mVideoPktQueue.peek(&videoPacket);
+            ret= mVideoPktQueue->peek(&videoPacket);
             if (videoPacket->getNALUType()==NALU_TYPE_IDR){
                 break;
             }else{
-                mVideoPktQueue.take(&videoPacket);
+                mVideoPktQueue->take(&videoPacket);
                 delete videoPacket;
                 (*countOfDiscardPackets)++;
                 *durationOfDiscardPackets+=videoPacket->duration;
