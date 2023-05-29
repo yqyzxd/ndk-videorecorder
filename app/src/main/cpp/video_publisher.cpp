@@ -311,7 +311,6 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
 
     mCurAudioPacketPts = packet->timeMills;
 
-
     logPacket(oc, &pkt);
     ret = av_interleaved_write_frame(oc, &pkt);
     av_packet_unref(&pkt);
@@ -438,6 +437,19 @@ double VideoPublisher::getAudioStreamTimeInSecs() {
 }
 
 int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
+    AudioPacket *packet;
+    int ret = mAudioProvider(&packet, mAudioProviderCtx);
+    if (ret < 0) {
+        return ret;
+    }
+
+    AVPacket pkt={0};
+    mCurAudioPacketPts=packet->position;
+    pkt.data=packet->data;
+    pkt.size=packet->size;
+    ////
+
+
 
     return 0;
 }

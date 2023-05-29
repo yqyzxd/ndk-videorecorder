@@ -6,14 +6,14 @@
 #define NDK_VIDEORECORDER_AUDIO_FRAME_H
 
 typedef struct AudioPacket {
-    short *buffer;
+    byte *data;
     int size;
     float position;
 
     ~AudioPacket() {
-        if (buffer != nullptr) {
-            delete[] buffer;
-            buffer = nullptr;
+        if (data != nullptr) {
+            delete[] data;
+            data = nullptr;
         }
     }
 
