@@ -9,6 +9,8 @@
 #include "encoder/video_frame.h"
 #include "libs/blocking_queue/blocking_queue.h"
 #include "utils/log.h"
+#include "audio_frame.h"
+
 #define THRESHOLD_VIDEO_PACKET_QUEUE 60
 #define LOG_TAG "VideoPacketPool"
 class VideoPacketPool {
@@ -28,8 +30,10 @@ private:
     BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
     VideoPacket* mCurVideoPacket=0;
 
-    bool detectDiscardVideoPacket();
+    BlockingQueue<AudioPacket*> *mAudioPktQueue = 0;
 
+
+    bool detectDiscardVideoPacket();
     int discardVideoGOP(int *countOfDiscardPackets, int *durationOfDiscardPackets);
 };
 

@@ -61,7 +61,7 @@ void CameraPreviewController::onSurfaceDestroyed() {
 
 void CameraPreviewController::onFrameAvailable() {
     if (!mSwitchingCamera){
-        LOGI("onFrameAvailable");
+        //LOGI("onFrameAvailable");
         glSurface->queueEvent(new Runnable(updateTexImage,this));
     }
 
@@ -77,9 +77,9 @@ void CameraPreviewController::switchCamera(int cameraFacingId) {
 }
 
 void
-CameraPreviewController::startEncode(const char *h264File, int width, int height, int videoBitrate,
+CameraPreviewController::startEncode( int width, int height, int videoBitrate,
                                      int frameRate) {
-    mPreviewRenderer->startEncode(h264File,width,height,videoBitrate,frameRate);
+    mPreviewRenderer->startEncode(width,height,videoBitrate,frameRate);
 }
 
 void CameraPreviewController::stopEncode() {

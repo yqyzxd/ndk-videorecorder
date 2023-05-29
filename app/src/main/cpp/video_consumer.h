@@ -8,6 +8,7 @@
 
 #include "utils/thread.h"
 #include "video_packet_pool.h"
+#include "video_publisher.h"
 
 class VideoConsumer : public Thread{
 public:
@@ -20,8 +21,20 @@ public:
 
     void run() override;
 
+    void stop();
+
+
+    static int getVideoPacketCallback(VideoPacket** pkt,void* ctx);
+
+
 private:
     VideoPacketPool* mVideoPacketPool= nullptr;
+    VideoPublisher* mPublisher;
+
+
+    bool mStop;
+
+    int getVideoPacket(VideoPacket **packet);
 };
 
 

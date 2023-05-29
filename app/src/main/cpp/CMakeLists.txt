@@ -23,6 +23,9 @@ add_subdirectory(libs/lock)
 include_directories(libyuv/include)
 add_subdirectory(libyuv)
 
+include_directories(audio)
+add_subdirectory(audio)
+
 add_library( # Sets the name of the library.
         ${NAME}
 

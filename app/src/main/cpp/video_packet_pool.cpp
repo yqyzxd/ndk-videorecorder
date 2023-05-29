@@ -5,14 +5,13 @@
 #include "video_packet_pool.h"
 
 
-
 VideoPacketPool::VideoPacketPool() {
-    mVideoPktQueue = new LinkedBlockingQueue<VideoPacket*>();
+    mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
 }
 
 VideoPacketPool::~VideoPacketPool() {}
 
-VideoPacketPool* VideoPacketPool::instance=new VideoPacketPool();
+VideoPacketPool *VideoPacketPool::instance = new VideoPacketPool();
 
 VideoPacketPool *VideoPacketPool::getInstance() {
     return instance;
@@ -26,18 +25,20 @@ int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
             int durationOfDiscardPackets = 0;
 
 
-            int ret = discardVideoGOP(&countOfDiscardPackets,&durationOfDiscardPackets);
-            if (ret<0){
+            int ret = discardVideoGOP(&countOfDiscardPackets, &durationOfDiscardPackets);
+            if (ret < 0) {
                 //discard error
             }
-            LOGI("discard packets :%d,duration:%d",countOfDiscardPackets,durationOfDiscardPackets);
+            LOGI("discard packets :%d,duration:%d", countOfDiscardPackets,
+                 durationOfDiscardPackets);
         }
-        if (mCurVideoPacket!= nullptr){
-            int duration= packet->timeMills - mCurVideoPacket->timeMills;
-            mCurVideoPacket->duration=duration;
+        if (mCurVideoPacket != nullptr) {
+            int duration = packet->timeMills - mCurVideoPacket->timeMills;
+            mCurVideoPacket->duration = duration;
             mVideoPktQueue->put(mCurVideoPacket);
+            LOGI("enqueueVideoPacket：%d",mVideoPktQueue->size());
         }
-        mCurVideoPacket=packet;
+        mCurVideoPacket = packet;
     }
 
     return 0;
@@ -48,34 +49,47 @@ bool VideoPacketPool::detectDiscardVideoPacket() {
 }
 
 int VideoPacketPool::discardVideoGOP(int *countOfDiscardPackets, int *durationOfDiscardPackets) {
-    VideoPacket* videoPacket;
-    *countOfDiscardPackets=0;
-    *durationOfDiscardPackets=0;
+    VideoPacket *videoPacket;
+    *countOfDiscardPackets = 0;
+    *durationOfDiscardPackets = 0;
 
-    int ret =mVideoPktQueue->peek(&videoPacket);
-    bool isFirstPacket= true;
-    while (ret>=0){
+    int ret = mVideoPktQueue->peek(&videoPacket);
+    bool isFirstPacket = true;
+    while (ret >= 0) {
 
-        if (isFirstPacket){
-            isFirstPacket= false;
-            if (videoPacket->getNALUType()==NALU_TYPE_IDR){
+        if (isFirstPacket) {
+            isFirstPacket = false;
+            if (videoPacket->getNALUType() == NALU_TYPE_IDR) {
                 //队列中的第一个packet刚好是IDR帧
-                ret= mVideoPktQueue->take(&videoPacket);
+                ret = mVideoPktQueue->take(&videoPacket);
                 delete videoPacket;
                 (*countOfDiscardPackets)++;
-                *durationOfDiscardPackets+=videoPacket->duration;
+                *durationOfDiscardPackets += videoPacket->duration;
             }
-        }else{
-            ret= mVideoPktQueue->peek(&videoPacket);
-            if (videoPacket->getNALUType()==NALU_TYPE_IDR){
+        } else {
+            ret = mVideoPktQueue->peek(&videoPacket);
+            if (videoPacket->getNALUType() == NALU_TYPE_IDR) {
                 break;
-            }else{
+            } else {
                 mVideoPktQueue->take(&videoPacket);
                 delete videoPacket;
                 (*countOfDiscardPackets)++;
-                *durationOfDiscardPackets+=videoPacket->duration;
+                *durationOfDiscardPackets += videoPacket->duration;
             }
         }
     }
+    return 0;
+}
+
+int VideoPacketPool::getVideoPacket(VideoPacket **packet) {
+    return mVideoPktQueue->take(packet);
+}
+
+int VideoPacketPool::getVideoPacketQueueSize() {
+    return mVideoPktQueue->size();
+}
+
+int VideoPacketPool::abortVideoPacketQueue() {
+    mVideoPktQueue->flush();
     return 0;
 }

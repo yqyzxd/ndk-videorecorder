@@ -7,7 +7,7 @@
 #define LOG_TAG "SoftVideoEncoderAdapter"
 
 void SoftVideoEncoderAdapter::onRenderFinishCallback(void *ctx, void *bytes) {
-    LOGI("onRenderFinishCallback");
+    //LOGI("onRenderFinishCallback");
     SoftVideoEncoderAdapter *adapter = static_cast<SoftVideoEncoderAdapter *>(ctx);
     adapter->onRenderFinish(bytes);
     return;
@@ -35,11 +35,11 @@ void SoftVideoEncoderAdapter::runEncode() {
 
     //作为消费者：不断从VideoFrameQueue中获取VideoFrame
     mEncoder = new X264Encoder();
-    int ret=mEncoder->init(h264File, width, height, bitRate, frameRate);
+    int ret=mEncoder->init( width, height, bitRate, frameRate);
 
     if (ret>=0){
         while (!mQuit) {
-            LOGI("runEncode");
+
             VideoFrame *videoFrame = nullptr;
             int ret = mVideoFrameQueue->take(&videoFrame);
             if (ret == 0 && videoFrame!= nullptr) {
@@ -80,7 +80,7 @@ void SoftVideoEncoderAdapter::encode(int textureId) {
     if (mQuit){
         return;
     }
-    LOGI("start encode");
+    //LOGI("start encode");
     //判断渲染线程是否已经启动
     if (!mGLOffScreenSurface->isRenderPrepared()){
         LOGI("skip encode because render thread is not prepared");
@@ -93,7 +93,7 @@ void SoftVideoEncoderAdapter::encode(int textureId) {
 
     //在frameRate的帧率下 经过x秒后应该有的帧数量
     int standardFrameCount = duration / 1000.0f * frameRate + 0.5;
-    LOGE("standardFrameCount:%d,mEncodedFrameCount:%d",standardFrameCount,mEncodedFrameCount);
+    //LOGE("standardFrameCount:%d,mEncodedFrameCount:%d",standardFrameCount,mEncodedFrameCount);
     //帧率控制
     if (standardFrameCount < mEncodedFrameCount) {
         LOGI("drop frame because exceed frameRate");
@@ -109,15 +109,15 @@ void SoftVideoEncoderAdapter::encode(int textureId) {
         mCopyTextureRenderer->updateTex(textureId);
     }
     //唤醒纹理拷贝线程进行工作
-    LOGI("requestRender");
+    //LOGI("requestRender");
     mGLOffScreenSurface->requestRender();
     //阻塞预览线程，需要通过回调函数进行唤醒
-    LOGE("mCopyCond await");
+    //LOGE("mCopyCond await");
     mCopyCond->await();
 
-    LOGE("mCopyLock unlock");
+    //LOGE("mCopyLock unlock");
     mCopyLock->unlock();
-    LOGE("end encode");
+    //LOGE("end encode");
 }
 
 void SoftVideoEncoderAdapter::stop() {
@@ -155,16 +155,14 @@ void SoftVideoEncoderAdapter::dealloc() {
 
 //纹理拷贝结束回调函数
 void SoftVideoEncoderAdapter::onRenderFinish(void *buffer) {
-    LOGI("onRenderFinish");
-
 
     VideoFrame *videoFrame = new VideoFrame();
     videoFrame->buffer = static_cast<byte *>(buffer);
     videoFrame->size = mByteSize;
     videoFrame->timeInMills = currentTimeMills() - mStartTimeInMills;
-    LOGI("before videoFrame enqueue timeMills:%ld",videoFrame->timeInMills);
+   // LOGI("before videoFrame enqueue timeMills:%ld",videoFrame->timeInMills);
     mVideoFrameQueue->put(videoFrame);
-    LOGI("after videoFrame enqueue");
-    LOGE("mCopyCond signal");
+    //LOGI("after videoFrame enqueue");
+    //LOGE("mCopyCond signal");
     mCopyCond->signal();
 }

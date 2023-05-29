@@ -6,9 +6,8 @@
 VideoEncoderAdapter::VideoEncoderAdapter() {
 
 }
-int VideoEncoderAdapter::init(const char *output, int width, int height, int bitRate, int frameRate) {
+int VideoEncoderAdapter::init( int width, int height, int bitRate, int frameRate) {
 
-    h264File=fopen(output,"wb+");
     this->width=width;
     this->height=height;
     this->bitRate=bitRate;

@@ -31,6 +31,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.HasDefaultViewModelProviderFactory
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wind.ndk.camera.CameraPreviewScheduler
 import com.wind.ndk.camera.VideoCamera
 
@@ -47,12 +52,27 @@ import com.wind.ndk.camera.VideoCamera
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
-    var song by rememberSaveable{ mutableStateOf("") }
+    var song by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val previewScheduler = remember(context) {
+        CameraPreviewScheduler(VideoCamera(context as Activity))
+    }
+    val owner = LocalViewModelStoreOwner.current
+    val defaultExtras =
+        (owner as? HasDefaultViewModelProviderFactory)?.defaultViewModelCreationExtras
+            ?: CreationExtras.Empty
+
+    val extras = MutableCreationExtras(defaultExtras).apply {
+        set(VideoRecordViewModel.CAMERA_PREVIEW_KEY, previewScheduler)
+    }
+
     Scaffold { paddingValues ->
         RecordScreen(
+            viewModel= viewModel(factory = VideoRecordViewModel.Factory, extras = extras),
             curSong = song,
             modifier = Modifier.padding(paddingValues),
             onSongChange = { song = it },
+            cameraPreviewScheduler=previewScheduler,
             onSelectSongClick = onSelectSongClick,
         )
     }
@@ -60,21 +80,39 @@ fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
 
 @Composable
 fun RecordScreen(
+    viewModel: VideoRecordViewModel,
     curSong: String,
     onSongChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    cameraPreviewScheduler: CameraPreviewScheduler,
+    onSelectSongClick: (NavResultCallback<String>) -> Unit
+) {
+    RecordScreen(
+        curSong = curSong,
+        onSongChange = onSongChange,
+        modifier = modifier,
+        onClickRecord = viewModel::onClickRecord,
+        cameraPreviewScheduler=cameraPreviewScheduler,
+        onSelectSongClick = onSelectSongClick,
+    )
+}
+
+@Composable
+fun RecordScreen(
+    curSong: String,
+    onSongChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    onClickRecord: () -> Unit,
+    cameraPreviewScheduler: CameraPreviewScheduler,
     onSelectSongClick: (NavResultCallback<String>) -> Unit
 ) {
 
 
-    val context = LocalContext.current
-    val previewScheduler = remember(context) {
-        CameraPreviewScheduler(VideoCamera(context as Activity))
-    }
+
     ConstraintLayout(modifier.fillMaxSize()) {
         val (songBtn, switchBtn, surfaceView, recordBtn, musicPanel) = createRefs()
 
-        CameraView(cameraPreviewScheduler = previewScheduler,
+        CameraView(cameraPreviewScheduler = cameraPreviewScheduler,
             modifier = Modifier
                 .fillMaxSize()
                 .constrainAs(surfaceView) {
@@ -106,7 +144,7 @@ fun RecordScreen(
         }) {
             Text(text = "切换")
         }
-        Button(onClick = { /*TODO*/ }, modifier = Modifier.constrainAs(recordBtn) {
+        Button(onClick = {onClickRecord()}, modifier = Modifier.constrainAs(recordBtn) {
             bottom.linkTo(parent.bottom, margin = 16.dp)
             start.linkTo(parent.start)
             end.linkTo(parent.end)
@@ -120,7 +158,13 @@ fun RecordScreen(
 
 @Composable
 fun MusicPlayerPanel(song: String, modifier: Modifier = Modifier) {
-    Surface(color = Color.Cyan, modifier = modifier.height(60.dp).fillMaxWidth(0.8f), shape = MaterialTheme.shapes.small) {
+    Surface(
+        color = Color.Cyan,
+        modifier = modifier
+            .height(60.dp)
+            .fillMaxWidth(0.8f),
+        shape = MaterialTheme.shapes.small
+    ) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -128,9 +172,9 @@ fun MusicPlayerPanel(song: String, modifier: Modifier = Modifier) {
             Text(text = song)
 
             Row {
-               IconButton(onClick = { /*TODO*/ }) {
-                   Icon(imageVector = Icons.Outlined.PlayArrow, contentDescription =null)
-               }
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(imageVector = Icons.Outlined.PlayArrow, contentDescription = null)
+                }
             }
         }
     }

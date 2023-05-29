@@ -39,6 +39,7 @@ private:
 
     BlockingQueue<VideoFrame*>* mVideoFrameQueue;
 
+
     GLOffScreenSurface* mGLOffScreenSurface;
     CopyTextureRenderer* mCopyTextureRenderer;
 

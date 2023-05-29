@@ -129,11 +129,11 @@ void PreviewRenderer::setEGLContext(EGLContext sharedEGLContext) {
     this->mSharedEGLContext=sharedEGLContext;
 }
 
-void PreviewRenderer::startEncode(const char *h264File, int width, int height, int videoBitrate,
+void PreviewRenderer::startEncode( int width, int height, int videoBitrate,
                                   int frameRate) {
 
     mVideoEncoderAdapter=new SoftVideoEncoderAdapter();
-    mVideoEncoderAdapter->init(h264File,width,height,videoBitrate,frameRate);
+    mVideoEncoderAdapter->init(width,height,videoBitrate,frameRate);
     mVideoEncoderAdapter->prepare(mSharedEGLContext);
     mEncoding= true;
 }
@@ -141,11 +141,11 @@ void PreviewRenderer::startEncode(const char *h264File, int width, int height, i
 void PreviewRenderer::stopEncode() {
     if (mVideoEncoderAdapter!= nullptr){
         mEncoding= false;
-        LOGI("before stop");
+        //LOGI("before stop");
         mVideoEncoderAdapter->stop();
-        LOGI("after stop");
+        //LOGI("after stop");
         delete mVideoEncoderAdapter;
-        LOGI("delete mVideoEncoderAdapter");
+        //LOGI("delete mVideoEncoderAdapter");
         mVideoEncoderAdapter= nullptr;
     }
 

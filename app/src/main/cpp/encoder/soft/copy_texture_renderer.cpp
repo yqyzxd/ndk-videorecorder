@@ -54,7 +54,7 @@ void CopyTextureRenderer::onDrawFrame() {
     checkGlError("after readPixels");
 
     this->mCallback(mCallbackCtx,bytes);
-    LOGI("after mCallback");
+   // LOGI("after mCallback");
 
 }
 void CopyTextureRenderer::surfaceDestroyed() {}

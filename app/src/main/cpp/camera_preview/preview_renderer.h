@@ -42,7 +42,7 @@ public:
 
     void setEGLContext(EGLContext pVoid);
 
-    void startEncode(const char *h264File, int width, int height, int videoBitrate, int frameRate);
+    void startEncode( int width, int height, int videoBitrate, int frameRate);
 
     void stopEncode();
 };

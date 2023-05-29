@@ -47,6 +47,7 @@
  */
 #define NALU_TYPE_NON_IDR 1
 #define NALU_TYPE_IDR     5
+#define NALU_TYPE_SEI     6
 #define NALU_TYPE_SPS     7
 #define NALU_TYPE_PPS     8
 

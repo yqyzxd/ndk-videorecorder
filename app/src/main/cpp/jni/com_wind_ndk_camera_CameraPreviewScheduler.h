@@ -61,7 +61,7 @@ JNIEXPORT void JNICALL Java_com_wind_ndk_camera_CameraPreviewScheduler_nativeSwi
  * Signature: (Ljava/lang/String;IIII)V
  */
 JNIEXPORT void JNICALL Java_com_wind_ndk_camera_CameraPreviewScheduler_startEncode
-  (JNIEnv *, jobject, jstring, jint, jint, jint, jint);
+  (JNIEnv *, jobject, jint, jint, jint, jint);
 
 /*
  * Class:     com_wind_ndk_camera_CameraPreviewScheduler

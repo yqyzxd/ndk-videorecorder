@@ -15,14 +15,13 @@ public:
     VideoEncoderAdapter();
     virtual ~VideoEncoderAdapter(){};
 
-    virtual int init(const char* output,int width,int height,int bitRate,int frameRate);
+    virtual int init(int width,int height,int bitRate,int frameRate);
     virtual void prepare(EGLContext sharedContext)=0;
     virtual void encode(int textureId)=0;
     virtual void stop()=0;
     virtual void dealloc()=0;
 
 protected:
-    FILE* h264File;
     int width;
     int height;
     int bitRate;

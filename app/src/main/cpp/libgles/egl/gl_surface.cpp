@@ -167,25 +167,25 @@ void GLSurface::renderLoop() {
             while (!mRunnables->empty()){
                 Runnable* runnable=mRunnables->front();
                 mRunnables->pop();
-                LOGI("before runnable  run");
+                //LOGI("before runnable  run");
                 runnable->run();
                 delete runnable;
-                LOGI("after runnable  run");
+                //LOGI("after runnable  run");
             }
             mSurface->makeCurrent();
-            LOGI("before onDrawFrame");
+            //LOGI("before onDrawFrame");
             checkGlError("onDrawFrame");
             mRenderer->onDrawFrame();
-            LOGI("after onDrawFrame");
+            //LOGI("after onDrawFrame");
             if (!isOffScreen()){
                 mSurface->swapBuffers();
             }
 
         }
         if (mRenderMode == RENDER_MODE_WHEN_DIRTY && !mKillRendererThread&& !mWakeUpFromDestroyed){
-            LOGI("before pthread_cond_wait");
+            //LOGI("before pthread_cond_wait");
             pthread_cond_wait(&mCond,&mLock);
-            LOGI("after pthread_cond_wait");
+            //LOGI("after pthread_cond_wait");
         }
         //LOGE("GL thread next loop");
         pthread_mutex_unlock(&mLock);

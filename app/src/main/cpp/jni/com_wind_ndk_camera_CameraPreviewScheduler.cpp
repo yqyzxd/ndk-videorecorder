@@ -60,11 +60,10 @@ Java_com_wind_ndk_camera_CameraPreviewScheduler_nativeRelease(JNIEnv *env, jobje
     }*/
 }
 JNIEXPORT void JNICALL Java_com_wind_ndk_camera_CameraPreviewScheduler_startEncode
-        (JNIEnv *env, jobject, jstring jh264File, jint width, jint height,  jint videoBitrate, jint frameRate){
+        (JNIEnv *env, jobject,  jint width, jint height,  jint videoBitrate, jint frameRate){
     if (controller){
-        const char* h264File=env->GetStringUTFChars(jh264File,0);
-        controller->startEncode(h264File,width,height,videoBitrate,frameRate);
-        env->ReleaseStringUTFChars(jh264File,h264File);
+
+        controller->startEncode(width,height,videoBitrate,frameRate);
     }
 }
 

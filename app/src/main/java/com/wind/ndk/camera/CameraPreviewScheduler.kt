@@ -67,7 +67,7 @@ class CameraPreviewScheduler(private val mCamera:VideoCamera) : CameraPreviewVie
 
     private external fun nativeRelease()
     private external fun nativeSwitchCamera(cameraFacingId: Int)
-    external fun startEncode(h264File: String, width: Int, height: Int, videoBitrate: Int, frameRate: Int)
+    external fun startEncode(width: Int, height: Int, videoBitrate: Int, frameRate: Int)
     external  fun stopEncode()
 
     companion object{

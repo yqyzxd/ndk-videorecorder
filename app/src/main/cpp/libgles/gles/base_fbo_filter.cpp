@@ -47,7 +47,7 @@ GLuint BaseFboFilter::onDrawFrame(GLuint textureId) {
 
 int BaseFboFilter::readPixels(void *pixels) {
     bindFramebuffer();
-    LOGI("readPixels width:%d,height:%d",mWidth,mHeight);
+    //LOGI("readPixels width:%d,height:%d",mWidth,mHeight);
     glReadPixels(0,0,mWidth,mHeight,GL_RGBA,GL_UNSIGNED_BYTE,pixels);
     checkGlError("glReadPixels");
 

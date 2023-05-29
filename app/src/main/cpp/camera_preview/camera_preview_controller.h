@@ -19,7 +19,7 @@
 
 
 
-class CameraPreviewHandler;
+
 class CameraPreviewController {
 public:
     CameraPreviewController(JavaVM* javaVM,jobject jobj,int cameraFacingId);
@@ -38,7 +38,7 @@ public:
 
     void switchCamera(int cameraFacingId);
 
-    void startEncode(const char *h264File, int width, int height, int videoBitrate, int frameRate);
+    void startEncode( int width, int height, int videoBitrate, int frameRate);
 
     void stopEncode();
 

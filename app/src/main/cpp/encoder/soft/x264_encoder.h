@@ -16,6 +16,7 @@ extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
 #include "libavutil/imgutils.h"
+#include "libavutil/timestamp.h"
 };
 class X264Encoder {
 
@@ -24,12 +25,11 @@ public:
     X264Encoder();
     ~X264Encoder();
 
-    int init(FILE* x264File,int width,int height,int bitRate,int frameRate);
+    int init(int width,int height,int bitRate,int frameRate);
     int encode(VideoFrame* frame);
     int dealloc();
 
 private:
-    FILE* h264File;
     AVCodec* mAVCodec= nullptr;
     AVCodecContext* mAVCodecContext= nullptr;
     AVFrame* mAVFrame= nullptr;
@@ -39,10 +39,11 @@ private:
     const char* mBitrateMode;
     VideoPacketPool* mVideoPacketPool=0;
 
-
+   bool mPrinted;
     X264Parser* mX264Parser;
     bool mAlreadyWriteSPS;
 
+    VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts);
 };
 
 
