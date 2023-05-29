@@ -8,6 +8,7 @@
 
 #include "encoder/video_frame.h"
 #include "utils/log.h"
+#include "audio_frame.h"
 
 
 extern "C"{
@@ -19,6 +20,7 @@ extern "C"{
 };
 
 typedef int (*VideoPacketProvider)(VideoPacket** pkt,void* ctx);
+typedef int (*AudioPacketProvider)(AudioPacket** pkt,void* ctx);
 
 typedef struct OutputStream{
     AVStream* st;
@@ -44,8 +46,8 @@ public:
                      int videoFrameRate,int videoBitrate,int videoWidth,int videoHeight,
                      int audioBitrate,int audioSampleRate,int audioChannels);
 
-    virtual void setVideoPacketProvider(VideoPacketProvider provider,void* ctx);
-
+     void setVideoPacketProvider(VideoPacketProvider provider,void* ctx);
+     void setAudioPacketProvider(AudioPacketProvider provider,void* ctx);
     int encode();
     int stop();
 
@@ -61,12 +63,20 @@ protected:
     int mAudioSampleRate;
     int mAudioChannels;
 
-    int mVideoLastPresentationTime;
     //是否已经写入了文件头
     bool mHeaderHasWrite= false;
 
     VideoPacketProvider mVideoProvider;
     void *mVideoProviderCtx;
+
+    AudioPacketProvider mAudioProvider;
+    void *mAudioProviderCtx;
+
+
+
+
+    double mCurAudioPacketPts;
+    double mCurVideoPacketPts;
 
 
     AVOutputFormat* mAVOutputFormat;
@@ -95,8 +105,12 @@ protected:
 
     int openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt);
 
-    AVFrame *allocAudioFrame(AVSampleFormat sample_format, uint64_t channel_layout, int sample_rate,
-                             int nb_samples);
+
+    double getVideoStreamTimeInSecs();
+
+    double getAudioStreamTimeInSecs();
+
+    int writeAudioFrame(AVFormatContext *oc, OutputStream ost);
 };
 
 

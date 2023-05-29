@@ -91,6 +91,10 @@ void VideoPublisher::setVideoPacketProvider(VideoPacketProvider provider, void *
     this->mVideoProviderCtx = ctx;
 }
 
+void VideoPublisher::setAudioPacketProvider(AudioPacketProvider provider, void *ctx) {
+    this->mAudioProvider=provider;
+    this->mAudioProviderCtx=ctx;
+}
 int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **codec,
                               AVCodecID codecID) {
     AVCodecContext *c;
@@ -305,7 +309,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
 
     }
 
-    mVideoLastPresentationTime = packet->timeMills;
+    mCurAudioPacketPts = packet->timeMills;
 
 
     logPacket(oc, &pkt);
@@ -329,7 +333,15 @@ void VideoPublisher::logPacket(AVFormatContext *os, AVPacket *pkt) {
 }
 
 int VideoPublisher::encode() {
-    return writeVideoFrame(mAVFormatContext, mVideoStream);
+    double curVideoTime=getVideoStreamTimeInSecs();
+    double curAudioTime=getAudioStreamTimeInSecs();
+    int ret =0;
+    if (curAudioTime<curVideoTime){
+       ret= writeAudioFrame(mAVFormatContext,mAudioStream);
+    }else{
+        ret= writeVideoFrame(mAVFormatContext, mVideoStream);
+    }
+    return ret;
 }
 
 int VideoPublisher::stop() {
@@ -417,28 +429,16 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
     return 0;
 }
 
-AVFrame *VideoPublisher::allocAudioFrame(AVSampleFormat sample_fmt, uint64_t channel_layout,
-                                         int sample_rate, int nb_samples) {
-    AVFrame *frame = av_frame_alloc();
-    int ret;
-
-    if (!frame) {
-        fprintf(stderr, "Error allocating an audio frame\n");
-        exit(1);
-    }
-
-    frame->format = sample_fmt;
-    frame->channel_layout = channel_layout;
-    frame->sample_rate = sample_rate;
-    frame->nb_samples = nb_samples;
-
-    if (nb_samples) {
-        ret = av_frame_get_buffer(frame, 0);
-        if (ret < 0) {
-            fprintf(stderr, "Error allocating an audio buffer\n");
-            exit(1);
-        }
-    }
-
-    return frame;
+double VideoPublisher::getVideoStreamTimeInSecs() {
+    return mCurVideoPacketPts/1000.0f;
 }
+
+double VideoPublisher::getAudioStreamTimeInSecs() {
+    return mCurAudioPacketPts/1000.0f;
+}
+
+int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
+
+    return 0;
+}
+
