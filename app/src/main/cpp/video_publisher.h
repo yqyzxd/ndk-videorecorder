@@ -77,6 +77,7 @@ protected:
 
     OutputStream mAudioStream;
     AVCodec* mAudioCodec;
+    AVBitStreamFilterContext *audioBSFC;
 
     int addStream(OutputStream *outputStream, AVFormatContext* oc,AVCodec **codec, AVCodecID id);
 

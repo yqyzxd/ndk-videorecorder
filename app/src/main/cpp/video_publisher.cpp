@@ -66,6 +66,7 @@ VideoPublisher::init(const char *outputUri, int videoFrameRate, int videoBitrate
     av_dump_format(mAVFormatContext, 0, outputUri, 1);
 
     if ((fmt->flags & AVFMT_NOFILE) == 0) {
+        //todo 设置超时回调
         ret = avio_open(&mAVFormatContext->pb, outputUri, AVIO_FLAG_WRITE);
         if (ret < 0) {
             LOGE("avio_open error :", ret);
@@ -368,6 +369,49 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
 
 
     AVCodecContext* c=ost->codecCtx;
+
+    /**
+     * AudioSpecificConfig的内容，完全可以通过ADTS的7字节头生成，具体来说，AudioSpecificConfig需要3部分数据：profile(LC,Main,HE)，sample_rate, channel，这3个数据在ADTS头里都可以找到
+     * 有了这3个数据以后，可以进行合并生成2个字节，就是所谓的AudioSpecificConfig
+     * ```
+     * var profile:int = ((payload[2]&0xc0)>>6)+1;
+     * var sample_rate:int = (payload[2]&0x3c)>>2;
+     * var channel:int = ((payload[2]&0x1)<<2)|((payload[3]&0xc0)>>6);
+     *
+     * var config1:int = (profile<<3)|((sample_rate&0xe)>>1);
+     * var config2:int = ((sample_rate&0x1)<<7)|(channel<<3);
+     * var aacSeqHeader:ByteArray = new ByteArray();
+     * aacSeqHeader.writeByte(config1);
+     * aacSeqHeader.writeByte(config2);
+     *
+     * ```
+     * profile取值
+     *
+     *  Object Type ID           	        Aduio Object Type	备注
+     *      1	AAC Main
+     *      2	AAC LC	最常用
+     *      3	AAC LTR
+     *      4	SBR
+     *      5	AAC scalable
+     */
+
+    //AudioSpecificConfig
+    c->extradata_size=2;
+    c->extradata= static_cast<uint8_t *>(av_mallocz(2));
+    int profile = 2;
+    c->extradata[0]=(profile<< 3)|((mAudioSampleRate&0xe)>>1);
+    c->extradata[1]= ((mAudioSampleRate&0x1)<<7)|(mAudioChannels<<3);
+
+    /**
+     * AAC音频格式有两种
+     * ADIF(Audio Data Interchage Format)，音频数据交换格式：只有一个统一的头，必须得到所有数据后解码，适用于本地文件。
+     * ADTS(Audio Data Transport Stream)，音视数据传输流：每一帧都有头信息，可在任意帧解码，适用于传输流。
+     *
+     * 1）将AAC编码器编码后的原始码流（ADTS头 + ES流）封装为MP4或者FLV或者MOV等格式时，需要先将ADTS头转换为MPEG-4 AudioSpecficConfig （将音频相关编解码参数提取出来），并将原始码流中的ADTS头去掉（只剩下ES流）。
+     * 2）相反，从MP4或者FLV或者MOV等格式文件中解封装出AAC码流（只有ES流）时，需要在解析出的AAC码流前添加ADTS头（含音频相关编解码参数）。
+     */
+    //aac_adtstoasc作用：只是把带ADTS头的AAC流封装进MOV/MP4等格式时，创建MPEG-4 AudioSpecificConfig（asc），并去掉ADTS header
+    audioBSFC= av_bitstream_filter_init("aac_adtstoasc");
 
 
     return 0;
