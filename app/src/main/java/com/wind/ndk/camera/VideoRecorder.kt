@@ -1,6 +1,7 @@
 package com.wind.ndk.camera
 
 import com.wind.ndk.audio.recorder.AudioRecorder
+import com.wind.ndk.audio.recorder.PcmCollector
 import kotlin.concurrent.thread
 
 /**
@@ -42,7 +43,7 @@ class VideoRecorder(
                 return@thread
             }
             startProducer(
-                videoFrameRate, videoBitrate, videoWidth, videoHeight
+                videoFrameRate, videoBitrate, videoWidth, videoHeight,audioBitrate,audioSampleRate,audioChannels
             )
         }
 
@@ -65,12 +66,18 @@ class VideoRecorder(
         videoBitrate: Int,
         videoWidth: Int,
         videoHeight: Int,
+        audioBitrate: Int, audioSampleRate: Int, audioChannels: Int
     ): Int {
         //启动preview的encode
-        mCameraPreviewScheduler.startEncode(videoWidth, videoHeight, videoBitrate, videoFrameRate)
+        mCameraPreviewScheduler.startEncode(videoWidth, videoHeight, videoBitrate, videoFrameRate,)
 
         //启动录音
-        mAudioRecorder.configure()
+        //计算bufferSizeInShort
+
+
+        mAudioRecorder.configure(audioSampleRate,audioChannels)
+        val collector= PcmCollector(audioSampleRate,mAudioRecorder.getBufferSizeInShort())
+        mAudioRecorder.setConsumer(collector)
         mAudioRecorder.start()
 
         return 0

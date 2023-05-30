@@ -4,7 +4,7 @@
 
 #ifndef NDK_CAMERARECORDER_TIME_H
 #define NDK_CAMERARECORDER_TIME_H
-
+#include <sys/time.h>
 static inline long currentTimeMills(){
     struct timeval tv;
     gettimeofday(&tv, nullptr);

@@ -23,8 +23,6 @@ add_subdirectory(libs/lock)
 include_directories(libyuv/include)
 add_subdirectory(libyuv)
 
-include_directories(audio)
-add_subdirectory(audio)
 
 add_library( # Sets the name of the library.
         ${NAME}
@@ -54,6 +52,12 @@ add_library( # Sets the name of the library.
         com_wind_ndk_camera_VideoRecorder.cpp
         video_consumer.cpp
         video_publisher.cpp
+
+        audio/audio_encoder.cpp
+        audio/com_wind_ndk_audio_recorder_AudioEncoder.cpp
+        audio/com_wind_ndk_audio_recorder_PcmCollector.cpp
+        audio/pcm_collector.cpp
+        audio/audio_encoder_adapter.cpp
         )
 
 

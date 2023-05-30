@@ -9,7 +9,8 @@
 #include "encoder/video_frame.h"
 #include "libs/blocking_queue/blocking_queue.h"
 #include "utils/log.h"
-#include "audio_frame.h"
+#include "audio/audio_frame.h"
+
 
 #define THRESHOLD_VIDEO_PACKET_QUEUE 60
 #define LOG_TAG "VideoPacketPool"
@@ -24,6 +25,12 @@ public:
     int abortVideoPacketQueue();
     int getVideoPacket(VideoPacket** packet);
 
+
+
+    int enqueueAudioPacket(AudioPacket* packet);
+    int getAudioPacketQueueSize();
+    int abortAudioPacketQueue();
+    int getAudioPacket(AudioPacket** packet);
 
     static VideoPacketPool* getInstance();
 private:

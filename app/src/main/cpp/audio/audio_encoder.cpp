@@ -5,6 +5,7 @@
 #include "audio_encoder.h"
 
 
+
 #define LOG_TAG "AudioEncoder"
 int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSample,
                        const char *aacFilePath, const char *codecName) {
@@ -68,7 +69,13 @@ int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSam
     return 1;
 }
 
-void AudioEncoder::encode(byte *buffer, int size) {
+int AudioEncoder::encode(AudioPacket** packet) {
+
+
+
+    return 0;
+}
+/*void AudioEncoder::encode(byte *buffer, int size) {
 
     int bufferCursor=0;
 
@@ -78,9 +85,9 @@ void AudioEncoder::encode(byte *buffer, int size) {
         bufferCursor+=copySize;
         size-=copySize;
 
-        long long beginEncodeTimestamp=getCurrentTimestamp();
+        long long beginEncodeTimestamp=currentTimeMills();
         encodePacket();
-        totalEncodeTimeMills+=getCurrentTimestamp()-beginEncodeTimestamp;
+        totalEncodeTimeMills+=currentTimeMills()-beginEncodeTimestamp;
         samplesCursor=0;
     }
 
@@ -89,7 +96,7 @@ void AudioEncoder::encode(byte *buffer, int size) {
         samplesCursor+=size;
     }
 
-}
+}*/
 
 void AudioEncoder::encodePacket() {
     AVPacket pkt;
@@ -98,7 +105,7 @@ void AudioEncoder::encodePacket() {
     AVFrame* encodeFrame;
     if(swrContext){
         LOGI("exist swrContext");
-        long long beginSWRTimestamp=getCurrentTimestamp();
+        long long beginSWRTimestamp=currentTimeMills();
         const uint8_t** in=   (const uint8_t**)inputFrame->data;
         swr_convert(swrContext, convertData, avCodecContext->frame_size,
                     in , avCodecContext->frame_size);
@@ -108,7 +115,7 @@ void AudioEncoder::encodePacket() {
                 swrFrame->data[i][j]=convertData[i][j];
             }
         }
-        totalSWRTimeMills+=(getCurrentTimestamp()-beginSWRTimestamp);
+        totalSWRTimeMills+=(currentTimeMills()-beginSWRTimestamp);
         encodeFrame=swrFrame;
     }else{
         encodeFrame=inputFrame;
@@ -154,14 +161,7 @@ void AudioEncoder::encodePacket() {
     }
 
 }
-void AudioEncoder::writeAACPacketToFile(uint8_t *data, int size) {
-    uint8_t* buffer=new uint8_t[size+7];
-    memset(buffer,0,size+1);
-    memcpy(buffer+7,data,size);
-    addADTSToPacket(buffer,size+7);
-    fwrite(buffer,sizeof(uint8_t),size+7,outputAACFile);
 
-}
 
 void AudioEncoder::addADTSToPacket(uint8_t *buffer, int size) {
     int profile = 29;//2 : LC; 5 : HE-AAC; 29: HEV2

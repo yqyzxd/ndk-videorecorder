@@ -8,7 +8,7 @@
 
 #include "encoder/video_frame.h"
 #include "utils/log.h"
-#include "audio_frame.h"
+#include "audio/audio_frame.h"
 
 
 extern "C"{
@@ -31,7 +31,6 @@ typedef struct OutputStream{
     AVFrame* avFrame;
     AVFrame* tmpFrame;
 
-    float t,tincr,tincr2;
     SwsContext* swsCtx;
     SwrContext* swrCtx;
 }OutputStream;
@@ -87,7 +86,7 @@ protected:
 
     OutputStream mAudioStream;
     AVCodec* mAudioCodec;
-    AVBitStreamFilterContext *audioBSFC;
+    AVBitStreamFilterContext *mAudioBSFC;
 
     int addStream(OutputStream *outputStream, AVFormatContext* oc,AVCodec **codec, AVCodecID id);
 

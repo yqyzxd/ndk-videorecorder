@@ -38,7 +38,7 @@ class VideoRecordViewModel(
                 videoWidth = 1280,
                 videoHeight = 720,
                 audioBitrate = 64*1000,
-                audioChannels = 2,
+                audioChannels = 1, //录制的时候使用单声道，后期使用ffmpeg转化成双声道
                 audioSampleRate = 44100,
 
             )

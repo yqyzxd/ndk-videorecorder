@@ -7,6 +7,7 @@
 
 typedef struct AudioPacket {
     byte *data;
+    short* buffer;
     int size;
     float position;
 

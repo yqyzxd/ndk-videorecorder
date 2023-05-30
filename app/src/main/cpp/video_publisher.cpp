@@ -422,7 +422,7 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
      * 2）相反，从MP4或者FLV或者MOV等格式文件中解封装出AAC码流（只有ES流）时，需要在解析出的AAC码流前添加ADTS头（含音频相关编解码参数）。
      */
     //aac_adtstoasc作用：只是把带ADTS头的AAC流封装进MOV/MP4等格式时，创建MPEG-4 AudioSpecificConfig（asc），并去掉ADTS header
-    audioBSFC= av_bitstream_filter_init("aac_adtstoasc");
+    mAudioBSFC= av_bitstream_filter_init("aac_adtstoasc");
 
 
     return 0;
@@ -447,9 +447,26 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
     mCurAudioPacketPts=packet->position;
     pkt.data=packet->data;
     pkt.size=packet->size;
-    ////
+    pkt.dts=mCurAudioPacketPts;
+    pkt.pts=mCurAudioPacketPts;
+    pkt.duration=1024;
+    pkt.stream_index=ost.st->index;
 
+    AVPacket dstPkt={0};
+    ret=av_bitstream_filter_filter(mAudioBSFC,ost.codecCtx, nullptr,&dstPkt.data,&dstPkt.size,
+                               pkt.data,pkt.size,pkt.flags&AV_PKT_FLAG_KEY);
+    if (ret>=0){
+        dstPkt.pts=pkt.pts;
+        dstPkt.dts=pkt.dts;
+        dstPkt.duration=pkt.duration;
+        dstPkt.stream_index=pkt.stream_index;
 
+        ret = av_interleaved_write_frame(oc, &pkt);
+        if (ret<0){
+            LOGE("audio av_interleaved_write_frame error");
+        }
+        av_packet_unref(&pkt);
+    }
 
     return 0;
 }

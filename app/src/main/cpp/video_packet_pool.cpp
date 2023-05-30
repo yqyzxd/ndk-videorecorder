@@ -7,6 +7,7 @@
 
 VideoPacketPool::VideoPacketPool() {
     mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
+    mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
 }
 
 VideoPacketPool::~VideoPacketPool() {}
@@ -92,4 +93,8 @@ int VideoPacketPool::getVideoPacketQueueSize() {
 int VideoPacketPool::abortVideoPacketQueue() {
     mVideoPktQueue->flush();
     return 0;
+}
+
+int VideoPacketPool::enqueueAudioPacket(AudioPacket *packet) {
+
 }

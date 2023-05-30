@@ -4,11 +4,12 @@
 
 #ifndef NDK_AUDIORECODER_AUDIO_ENCODER_H
 #define NDK_AUDIORECODER_AUDIO_ENCODER_H
-#include "types.h"
-#include "log.h"
-#include "utils.h"
 
 
+#include "../utils/types.h"
+#include "../utils/log.h"
+#include "../utils/time.h"
+#include "audio_frame.h"
 
 extern "C"{
 #include "libswresample/swresample.h"
@@ -56,18 +57,18 @@ private:
     FILE* outputAACFile;
 
 public:
-    int init(int bitRate, int channels ,int sampleRate,int bitsPerSample,const char* aacFilePath,const char* codecName);
-    void encode(byte* buffer,int size);
+    int init(int bitRate, int channels ,int sampleRate,int bitsPerSample,const char* codecName);
+    int encode(AudioPacket** packet);
     void destroy();
 
 
+    //void writeAACPacketToFile(uint8_t *data, int size);
+
+
+private:
     int allocAudioStream(const char *codecName);
     int allocAvFrame();
-
     void encodePacket();
-
-    void writeAACPacketToFile(uint8_t *data, int size);
-
     void addADTSToPacket(uint8_t *buffer, int size);
 };
 
