@@ -11,7 +11,7 @@
 #include "../libs/blocking_queue/blocking_queue.h"
 #include "audio_encoder.h"
 
-typedef int (*PcmPacketProvider)(AudioPacket**);
+
 class AudioEncoderAdapter : public Thread{
 
 public:
@@ -20,13 +20,14 @@ public:
 
     int init(int audioBitrate,int audioSampleRate, int audioChannels);
 
-    void setPcmPacketProvider(PcmPacketProvider provider,void* ctx);
+
 
 
     void run();
 
     void dealloc();
 
+    static int provideAudioFrameCallback(short* samples,int frameSize,int nbChannels,double* pts,void* ctx);
 private:
     int mPacketBufferSize;
     short* mPacketBuffer;
@@ -40,6 +41,8 @@ private:
 
     AudioEncoder* mAudioEncoder;
     BlockingQueue<AudioPacket*>* mAACQueue;
+private:
+    int provideAudioFrame(short* samples,int frameSize,int nbChannels,double* pts);
 };
 
 
