@@ -8,7 +8,7 @@
 
 #define LOG_TAG "AudioEncoder"
 int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSample,
-                       const char *aacFilePath, const char *codecName) {
+                     const char *codecName) {
 
     swrBuffer= nullptr;
     swrContext= nullptr;
@@ -24,29 +24,26 @@ int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSam
     this->channels=channels;
     this->sampleRate=sampleRate;
 
-    outputAACPath=new char[strlen(aacFilePath)+1];
-    strcpy(outputAACPath,aacFilePath);
 
-    outputAACFile= fopen(aacFilePath,"wb+");
 
     avFormatContext = avformat_alloc_context();
 
     // Allocate an AVFormatContext for an output format.
     // avformat_free_context() can be used to free the context and
     // everything allocated by the framework within it.
-    int ret = avformat_alloc_output_context2(&avFormatContext, nullptr, nullptr, aacFilePath);
-    if (ret < 0) {
-        return -1;
-    }
+    //int ret = avformat_alloc_output_context2(&avFormatContext, nullptr, nullptr, aacFilePath);
+    //if (ret < 0) {
+    //    return -1;
+    //}
 
     //Create and initialize a AVIOContext for accessing the
     //resource indicated by url.
-    ret = avio_open2(&avFormatContext->pb, aacFilePath, AVIO_FLAG_WRITE, nullptr, nullptr);
-    if (ret < 0) {
-        return -1;
-    }
+   // ret = avio_open2(&avFormatContext->pb, aacFilePath, AVIO_FLAG_WRITE, nullptr, nullptr);
+    //if (ret < 0) {
+    //    return -1;
+    //}
     //创建AudioStream
-    ret=allocAudioStream(codecName);
+    int ret=allocAudioStream(codecName);
     if (ret < 0) {
         LOGI("allocAudioStream error");
         return -1;
@@ -54,7 +51,7 @@ int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSam
     //Print detailed information about the input or output format, such as
     //duration, bitrate, streams, container, programs, metadata, side data,
     //codec and time base.
-    av_dump_format(avFormatContext, 0, aacFilePath, 1);
+    //av_dump_format(avFormatContext, 0, aacFilePath, 1);
 
     ret = avformat_write_header(avFormatContext, nullptr);
     if (ret < 0) {
@@ -154,7 +151,8 @@ void AudioEncoder::encodePacket() {
         //
         this->duration=pkt.pts * av_q2d(audioStream->time_base);
         //此函数负责交错地输出一个媒体包。如果调用者无法保证来自各个媒体流的包正确交错，则最好调用此函数输出媒体包，反之，可以调用av_write_frame以提高性能。
-        av_interleaved_write_frame(avFormatContext,&pkt);
+        //av_interleaved_write_frame(avFormatContext,&pkt);
+        //todo 输入到aac队列
         LOGI("av_interleaved_write_frame");
         //释放avPacket
         av_packet_unref(&pkt);
