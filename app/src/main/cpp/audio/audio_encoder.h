@@ -21,7 +21,7 @@ extern "C"{
 
 #define BITE_RATE 64000
 
-typedef int (*AudioFrameProvider)(short* samples,int nbSamples,int channels,int* pts,void* ctx);
+typedef int (*AudioFrameProvider)(short* samples,int nbSamples,int channels,double * pts,void* ctx);
 
 class AudioEncoder {
 private:

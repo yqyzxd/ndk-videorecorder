@@ -9,6 +9,8 @@
 #include "../libs/blocking_queue/blocking_queue.h"
 #include "../video_packet_pool.h"
 #include "../utils/time.h"
+#include "audio_encoder_adapter.h"
+
 class PcmCollector {
 
 public:
@@ -19,6 +21,7 @@ public:
     void collect(short *data, int sizeInShort);
 private:
     VideoPacketPool* mPool;
+    AudioEncoderAdapter* mAudioEncoderAdapter;
 
     int mAudioSampleRate;
     //每个packet的大小
@@ -29,6 +32,7 @@ private:
     int mBufferCursor;
 
     long mStartTimeMillis;
+
 
 
     void enqueue();

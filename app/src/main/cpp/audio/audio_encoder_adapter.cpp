@@ -34,13 +34,17 @@ int AudioEncoderAdapter::init(int audioBitrate, int audioSampleRate, int audioCh
 
 int
 AudioEncoderAdapter::provideAudioFrame(short *samples, int frameSize, int nbChannels, double *pts) {
+    int sizeInByte =frameSize * nbChannels * 2;
+
+
+
 
 }
 void AudioEncoderAdapter::run() {
     mAudioEncoder=new AudioEncoder();
 
     mAudioEncoder->init(mAudioBitrate,mAudioChannels,mAudioSampleRate,16,"fdk_aac");
-    mAudioEncoder->setAudioFrameProvider(,this);
+    mAudioEncoder->setAudioFrameProvider(provideAudioFrameCallback,this);
     while (mRunning){
         AudioPacket* audioPacket;
        int ret= mAudioEncoder->encode(&audioPacket);
