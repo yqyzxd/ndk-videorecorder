@@ -7,10 +7,15 @@
 
 VideoPacketPool::VideoPacketPool() {
     mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
+    mAudioFrameQueue = new LinkedBlockingQueue<AudioPacket *>();
     mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
+    mTotalDiscardVideoPacketDuration=0;
+    pthread_rwlock_init(&mRWLock, nullptr);
 }
 
-VideoPacketPool::~VideoPacketPool() {}
+VideoPacketPool::~VideoPacketPool() {
+    pthread_rwlock_destroy(&mRWLock);
+}
 
 VideoPacketPool *VideoPacketPool::instance = new VideoPacketPool();
 
@@ -21,7 +26,7 @@ VideoPacketPool *VideoPacketPool::getInstance() {
 int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
     if (mVideoPktQueue != nullptr) {
         //检测是否需要进行丢帧
-        if (detectDiscardVideoPacket()) {
+        while (detectDiscardVideoPacket()) {
             int countOfDiscardPackets = 0;
             int durationOfDiscardPackets = 0;
 
@@ -29,7 +34,9 @@ int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
             int ret = discardVideoGOP(&countOfDiscardPackets, &durationOfDiscardPackets);
             if (ret < 0) {
                 //discard error
+                break;
             }
+            recordDropVideoFrame(durationOfDiscardPackets);
             LOGI("discard packets :%d,duration:%d", countOfDiscardPackets,
                  durationOfDiscardPackets);
         }
@@ -95,6 +102,64 @@ int VideoPacketPool::abortVideoPacketQueue() {
     return 0;
 }
 
-int VideoPacketPool::enqueueAudioPacket(AudioPacket *packet) {
-
+int VideoPacketPool::enqueueAudioFrame(AudioPacket *packet) {
+    return mAudioFrameQueue->put(packet);
 }
+
+bool VideoPacketPool::detectDiscardAudioFrame() {
+    bool ret=false;
+    pthread_rwlock_rdlock(&mRWLock);
+    ret=mTotalDiscardVideoPacketDuration >= AUDIO_PACKET_DURATION_IN_SECS *1000.0f;
+    pthread_rwlock_unlock(&mRWLock);
+
+    return ret;
+}
+
+void VideoPacketPool::recordDropVideoFrame(int discardDuration) {
+
+    pthread_rwlock_wrlock(&mRWLock);
+    mTotalDiscardVideoPacketDuration+=discardDuration;
+    pthread_rwlock_unlock(&mRWLock);
+}
+
+bool VideoPacketPool::discardAudioFrame() {
+    int ret=0;
+    AudioPacket *packet;
+    ret= mAudioFrameQueue->take(&packet);
+    if (ret<0){
+        return false;
+    }
+    delete packet;
+    packet= nullptr;
+
+    pthread_rwlock_wrlock(&mRWLock);
+    mTotalDiscardVideoPacketDuration-=(AUDIO_PACKET_DURATION_IN_SECS *1000.0f);
+    pthread_rwlock_unlock(&mRWLock);
+    return true;
+}
+
+int VideoPacketPool::getAudioFrame(AudioPacket **packet) {
+    return mAudioFrameQueue->take(packet);
+}
+int VideoPacketPool::abortAudioFrameQueue() {
+    mAudioFrameQueue->flush();
+    return 0;
+}
+
+int VideoPacketPool::enqueueAudioPacket(AudioPacket *packet) {
+    return mAudioPktQueue->put(packet);
+}
+
+int VideoPacketPool::getAudioPacketQueueSize() {
+    return mAudioPktQueue->size();
+}
+
+int VideoPacketPool::getAudioPacket(AudioPacket **packet) {
+    return mAudioPktQueue->take(packet);
+}
+
+int VideoPacketPool::abortAudioPacketQueue() {
+     mAudioPktQueue->flush();
+     return 0;
+}
+

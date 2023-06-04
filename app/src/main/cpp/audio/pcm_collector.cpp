@@ -34,16 +34,20 @@ void PcmCollector::collect(short *data, int sizeInShort) {
     if (mStartTimeMillis==0){
         mStartTimeMillis= currentTimeMills();
         mAudioEncoderAdapter=new AudioEncoderAdapter();
-        mAudioEncoderAdapter->init(,mAudioSampleRate,)
+        //int audioBitrate,int audioSampleRate, int audioChannels
+        int audioBitrate=0;
+        int audioChannels=2;
+        mAudioEncoderAdapter->init(audioBitrate,mAudioSampleRate,audioChannels);
+        LOGI("after audio encoder adapter init");
     }
-
+    //LOGI("pcm collector collect");
     while (sizeInShort>0) {
         int remainSize = mBufferSizeInShort - mBufferCursor;
         if (remainSize >= sizeInShort) {
             //有剩余空间存放
             //memcpy 的第三个参数size单位是字节，而我们的数据是short类型，所以*2
             memcpy(mAudioBuffer, data, sizeInShort * 2);
-            mBufferCursor -= sizeInShort;
+            mBufferCursor += sizeInShort;
             sizeInShort = 0;
         } else {
             //剩余空间不够了
@@ -70,7 +74,8 @@ void PcmCollector::enqueue() {
         packet->buffer=packetBuffer;
         packet->size=mBufferCursor;
         packet->position=currentTimeMills()-mStartTimeMillis;
-        mPool->enqueueAudioPacket(packet);
+        mPool->enqueueAudioFrame(packet);
+        LOGI("enqueueAudioFrame");
         //todo 检测时间戳，是否需要插入空数据
     }
 

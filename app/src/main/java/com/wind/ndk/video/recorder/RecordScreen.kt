@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.wind.ndk.audio.recorder.AudioRecorder
 import com.wind.ndk.camera.CameraPreviewScheduler
 import com.wind.ndk.camera.VideoCamera
 
@@ -57,6 +58,9 @@ fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
     val previewScheduler = remember(context) {
         CameraPreviewScheduler(VideoCamera(context as Activity))
     }
+    val audioRecorder = remember(context) {
+        AudioRecorder
+    }
     val owner = LocalViewModelStoreOwner.current
     val defaultExtras =
         (owner as? HasDefaultViewModelProviderFactory)?.defaultViewModelCreationExtras
@@ -64,6 +68,8 @@ fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
 
     val extras = MutableCreationExtras(defaultExtras).apply {
         set(VideoRecordViewModel.CAMERA_PREVIEW_KEY, previewScheduler)
+        set(VideoRecordViewModel.AUDIO_RECORDER_KEY, audioRecorder)
+
     }
 
     Scaffold { paddingValues ->

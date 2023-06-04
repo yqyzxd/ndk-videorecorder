@@ -36,7 +36,7 @@ class VideoRecorder(
                 videoHeight,
                 audioBitrate,
                 audioSampleRate,
-                audioChannels
+                2
             )
             if (ret < 0) {
                 //error
@@ -56,6 +56,7 @@ class VideoRecorder(
     }
 
     private fun stopConsumer() {
+        mAudioRecorder.stop()
         nativeStopConsumer()
     }
 

@@ -64,11 +64,11 @@ typedef struct NALU{
         this->body=body;
     }
 
-    ~NALU(){
+    /*~NALU(){
         if (body!= nullptr){
             delete body;
         }
-    }
+    }*/
 
 } NALU;
 

@@ -9,7 +9,7 @@
 #define LOG_TAG "AudioEncoder"
 int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSample,
                         const char *codecName) {
-
+    mAudioNextPts=0;
     swrBuffer= nullptr;
     swrContext= nullptr;
     convertData= nullptr;
@@ -19,11 +19,15 @@ int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSam
     avCodecContext= nullptr;
 
 
-    this->bitRate=bitRate;
-    this->channels=channels;
-    this->sampleRate=sampleRate;
+    this->mBitRate=bitRate;
+    this->mChannels=channels;
+    this->mSampleRate=sampleRate;
 
 
+    mAudioFrameProvider= nullptr;
+    mAudioFrameProviderCtx= nullptr;
+    mAudioPacketCollector= nullptr;
+    mAudioPacketCollectorCtx= nullptr;
 
     //创建AudioStream
    int  ret=allocAudioStream(codecName);
@@ -42,20 +46,21 @@ void AudioEncoder::setAudioFrameProvider(AudioFrameProvider provider, void *ctx)
     this->mAudioFrameProvider=provider;
     this->mAudioFrameProviderCtx=ctx;
 }
-int AudioEncoder::encode(AudioPacket** packet) {
-    int pts=0;
-    int actualSampleSize=mAudioFrameProvider(reinterpret_cast<short *>(inputFrame->data[0]), nbSamples, channels, &pts, mAudioFrameProviderCtx);
-    if(actualSampleSize<0){
+int AudioEncoder::encode() {
+    LOGI("enter audio encoder encode");
+    double pts=0;
+    int actualSampleSizeInShort=mAudioFrameProvider(reinterpret_cast<short *>(inputFrame->data[0]), nbSamples, mChannels, &pts, mAudioFrameProviderCtx);
+    LOGI("enter audio encoder actualSampleSizeInShort");
+    if(actualSampleSizeInShort<=0){
         LOGI("provide audio frame error");
         return -1;
     }
 
+    //int sizePerChannel=actualSampleSizeInShort/mChannels;
+   // int sampleSizeInByte=actualSampleSizeInShort*2;
 
-
-
-
-
-    return 0;
+    int ret=encodePacket();
+    return ret;
 }
 /*void AudioEncoder::encode(byte *buffer, int size) {
 
@@ -80,9 +85,9 @@ int AudioEncoder::encode(AudioPacket** packet) {
 
 }*/
 
-void AudioEncoder::encodePacket() {
+int AudioEncoder::encodePacket() {
 
-    AVRational timeBase={1,sampleRate};
+    AVRational timeBase={1,mSampleRate};
 
     AVPacket pkt;
     av_init_packet(&pkt);
@@ -106,43 +111,48 @@ void AudioEncoder::encodePacket() {
         encodeFrame=inputFrame;
     }
 
-    pkt.stream_index=0;
+    //pkt.stream_index=0;
     pkt.duration=AV_NOPTS_VALUE;
-    pkt.pts=pkt.dts=0;
-    pkt.data=samples;
-    pkt.size=bufferSize;
+    pkt.pts=pkt.dts=mAudioNextPts;
+    mAudioNextPts=+encodeFrame->nb_samples;
+   // pkt.data=samples;
+    //pkt.size=bufferSize;
 
-    //@deprecated use avcodec_send_frame()/avcodec_receive_packet() instead
-    // avcodec_encode_audio2()
+
     LOGI("avcodec_send_frame");
     int ret=avcodec_send_frame(avCodecContext,encodeFrame);
     if (ret<0){
         LOGE("avcodec_send_frame error return %d",ret);
-        return;
+        return -1;
     }
     while (ret>=0){
         ret=avcodec_receive_packet(avCodecContext,&pkt);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
             LOGI("avcodec_receive_packet eagain || eof %d",ret);
-            return;
+            return 1;
         }else if (ret<0){
             LOGE("avcodec_receive_packet error return %d",ret);
-            return;
+            return -1;
         }
         //writeAACPacketToFile(pkt.data,pkt.size);
         if (avCodecContext->coded_frame&& avCodecContext->coded_frame->pts!=AV_NOPTS_VALUE){
             //todo pts为什么是这么设置？ a * bq / cq
             pkt.pts= av_rescale_q(avCodecContext->coded_frame->pts,avCodecContext->time_base,timeBase);
         }
-        //为什么要加flags
-        pkt.flags |=AV_PKT_FLAG_KEY;
-        //
-        this->duration=pkt.pts * av_q2d(timeBase);
 
-        //insert to packet queue
+        AudioPacket* outPacket=new AudioPacket();
+        outPacket->data=new byte[pkt.size];
+        memcpy(outPacket->data,pkt.data,pkt.size);
+        outPacket->size=pkt.size;
+        outPacket->position=(float)(pkt.pts * av_q2d(timeBase) * 1000.0f);
+
+        mAudioPacketCollector(outPacket,mAudioPacketCollectorCtx);
+
         //释放avPacket
         av_packet_unref(&pkt);
     }
+
+    return 0;
 
 }
 
@@ -166,16 +176,16 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
 
     avCodecContext->codec_id=codec->id;
     avCodecContext->codec_type= AVMEDIA_TYPE_AUDIO;
-    avCodecContext->sample_rate=sampleRate;
+    avCodecContext->sample_rate=mSampleRate;
 
-    if (bitRate<=0){
-        bitRate=BITE_RATE;
+    if (mBitRate<=0){
+        mBitRate=BITE_RATE;
     }
-    avCodecContext->bit_rate=bitRate;
+    avCodecContext->bit_rate=mBitRate;
     //设置sampleFmt
     avCodecContext->sample_fmt=AV_SAMPLE_FMT_S16;
     //设置通道信息
-    avCodecContext->channel_layout=channels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
+    avCodecContext->channel_layout=mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
     avCodecContext->channels= av_get_channel_layout_nb_channels(avCodecContext->channel_layout);
     // encoding: Set by user.
     // decoding: Set by libavcodec.
@@ -187,17 +197,17 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
 
 
 
-    if (channels !=avCodecContext->channels
-        || sampleRate!=avCodecContext->sample_rate
+    if (mChannels !=avCodecContext->channels
+        || mSampleRate!=avCodecContext->sample_rate
         || AV_SAMPLE_FMT_S16!=avCodecContext->sample_fmt){
 
 
         swrContext=swr_alloc_set_opts(nullptr,
                                                   av_get_default_channel_layout(avCodecContext->channels),
                                                   avCodecContext->sample_fmt,avCodecContext->sample_rate,
-                                                  av_get_default_channel_layout(channels),
+                                                  av_get_default_channel_layout(mChannels),
                                                   AV_SAMPLE_FMT_S16,
-                                                  sampleRate,
+                                                  mSampleRate,
                                                   0, nullptr
                                                   );
         if (!swrContext|| swr_init(swrContext)){
@@ -243,8 +253,8 @@ int AudioEncoder::allocAvFrame() {
      * enum AVSampleFormat for audio)
      */
     inputFrame->format=AV_SAMPLE_FMT_S16;
-    inputFrame->channel_layout= channels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
-    inputFrame->sample_rate=sampleRate;
+    inputFrame->channel_layout= mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
+    inputFrame->sample_rate=mSampleRate;
     /**
      * Get the required buffer size for the given audio parameters.
      */
@@ -338,6 +348,11 @@ void AudioEncoder::destroy() {
     }
 
 
+}
+
+void AudioEncoder::setAudioPacketCollector(AudioPacketCollector audioPacketCollector, void *ctx) {
+    mAudioPacketCollector=audioPacketCollector;
+    mAudioPacketCollectorCtx=ctx;
 }
 
 

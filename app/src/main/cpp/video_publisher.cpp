@@ -40,47 +40,51 @@ VideoPublisher::init(const char *outputUri, int videoFrameRate, int videoBitrate
     AVOutputFormat *fmt = mAVFormatContext->oformat;
     fmt->video_codec = AV_CODEC_ID_H264;//使用h264编码器
     if (fmt->video_codec != AV_CODEC_ID_NONE) {
-        ret = addStream(&mVideoStream, mAVFormatContext, &mVideoCodec, fmt->video_codec);
+        ret = addStream(&mVideoStream, mAVFormatContext, &mVideoCodec, fmt->video_codec, nullptr);
         if (ret < 0) {
             LOGE("addStream error :", ret);
             return ret;
         }
         openVideo(mAVFormatContext, mVideoCodec, &mVideoStream, opt);
     }
-    fmt->audio_codec = AV_CODEC_ID_AAC;//使用fdk-aac编码器
-    if (fmt->audio_codec != AV_CODEC_ID_NONE) {
-        ret = addStream(&mAudioStream, mAVFormatContext, &mAudioCodec, fmt->audio_codec);
-        if (ret < 0) {
-            LOGE("addStream error :", ret);
-            return ret;
-        }
-        openAudio(mAVFormatContext, mAudioCodec, &mAudioStream, opt);
+    //fmt->audio_codec = AV_CODEC_ID_AAC;//使用fdk-aac编码器
+
+    ret = addStream(&mAudioStream, mAVFormatContext, &mAudioCodec, AV_CODEC_ID_NONE, "libfdk_aac");
+    if (ret < 0) {
+        LOGE("addStream error :", ret);
+        return ret;
     }
+    openAudio(mAVFormatContext, mAudioCodec, &mAudioStream, opt);
 
 
-    /**
-     * Print detailed information about the input or output format, such as
-     * duration, bitrate, streams, container, programs, metadata, side data,
-     * codec and time base.
-     */
-    av_dump_format(mAVFormatContext, 0, outputUri, 1);
+
+/**
+ * Print detailed information about the input or output format, such as
+ * duration, bitrate, streams, container, programs, metadata, side data,
+ * codec and time base.
+ */
+    av_dump_format(mAVFormatContext,
+                   0, outputUri, 1);
 
     if ((fmt->flags & AVFMT_NOFILE) == 0) {
-        //todo 设置超时回调
+//todo 设置超时回调
         ret = avio_open(&mAVFormatContext->pb, outputUri, AVIO_FLAG_WRITE);
         if (ret < 0) {
             LOGE("avio_open error :", ret);
-            return ret;
+            return
+                    ret;
         }
     }
 
-    /* Write the stream header, if any. */
-    ret = avformat_write_header(mAVFormatContext, &opt);
+/* Write the stream header, if any. */
+   /* ret = avformat_write_header(mAVFormatContext, &opt);
     if (ret < 0) {
         LOGE("avformat_write_header error :%s", av_err2str(ret));
-        return ret;
+        return
+                ret;
     }
     mHeaderHasWrite = true;
+    */
     return 0;
 
 }
@@ -92,14 +96,19 @@ void VideoPublisher::setVideoPacketProvider(VideoPacketProvider provider, void *
 }
 
 void VideoPublisher::setAudioPacketProvider(AudioPacketProvider provider, void *ctx) {
-    this->mAudioProvider=provider;
-    this->mAudioProviderCtx=ctx;
+    this->mAudioProvider = provider;
+    this->mAudioProviderCtx = ctx;
 }
+
 int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **codec,
-                              AVCodecID codecID) {
+                              AVCodecID codecID, char *codecName) {
     AVCodecContext *c;
 
-    *codec = avcodec_find_encoder(codecID);
+    if (AV_CODEC_ID_NONE == codecID) {
+        *codec = avcodec_find_encoder_by_name(codecName);
+    } else {
+        *codec = avcodec_find_encoder(codecID);
+    }
     if (!(*codec)) {
         LOGE("avcodec_find_encoder error");
         return -1;
@@ -121,6 +130,7 @@ int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **
     switch ((*codec)->type) {
         case AVMEDIA_TYPE_VIDEO:
             c->codec_id = codecID;
+            c->codec_type = AVMEDIA_TYPE_VIDEO;
             c->bit_rate = mVideoBitrate;
             /* Resolution must be a multiple of two. */
             c->width = mVideoWidth;
@@ -141,12 +151,16 @@ int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **
 
             break;
         case AVMEDIA_TYPE_AUDIO:
+            c->codec_id = codecID;
+            c->codec_type = AVMEDIA_TYPE_AUDIO;
             c->sample_fmt = AV_SAMPLE_FMT_S16;
             c->bit_rate = mAudioBitrate;
             c->sample_rate = mAudioSampleRate;
             c->channel_layout = mAudioChannels == 1 ? AV_CH_LAYOUT_MONO : AV_CH_LAYOUT_STEREO;
             c->channels = av_get_channel_layout_nb_channels(c->channel_layout);
             ost->st->time_base = (AVRational) {1, c->sample_rate};
+            c->time_base = ost->st->time_base;
+
             break;
         default:
             break;
@@ -154,7 +168,7 @@ int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **
     /* Some formats want stream headers to be separate. */
 
     if (oc->oformat->flags & AVFMT_GLOBALHEADER) {
-        LOGE("AVFMT_GLOBALHEADER");
+        //LOGE("AVFMT_GLOBALHEADER");
         c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
@@ -218,11 +232,14 @@ AVFrame *VideoPublisher::allocPicture(AVPixelFormat pix_fmt, int width, int heig
 }
 
 bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
+    LOGI("enter writeVideoFrame");
     VideoPacket *packet;
     int ret = mVideoProvider(&packet, mVideoProviderCtx);
     if (ret < 0) {
         return false;
     }
+    AVCodecContext *c =ost.codecCtx;
+    LOGI("get VideoPacket from mVideoProvider");
     //栈上分配
     AVPacket pkt = {0};
     pkt.stream_index = ost.st->index;
@@ -259,37 +276,48 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         NALU *spsNalu = nalus->at(0);
         NALU *ppsNalu = nalus->at(1);
 
-        int extraDataSize = 8 + 2 + spsNalu->size + 1 + ppsNalu->size;
-        uint8_t *extraData = static_cast<uint8_t *>(av_mallocz(extraDataSize));
-        extraData[0] = 0x01;
-        extraData[1] = spsNalu->body[1];
-        extraData[2] = spsNalu->body[2];
-        extraData[3] = spsNalu->body[3];
 
-        extraData[4] = 0xFC | 3;
-        extraData[5] = 0xE0 | 1;
+        int extraDataSize = 8 + 2 + spsNalu->size + 1 + ppsNalu->size;
+       // uint8_t *extraData = static_cast<uint8_t *>(av_mallocz(extraDataSize));
+        c->extradata = static_cast<uint8_t *>(av_mallocz(extraDataSize));
+        c->extradata_size = extraDataSize;
+        c->extradata[0] = 0x01;
+        c->extradata[1] = spsNalu->body[1];
+        c->extradata[2] = spsNalu->body[2];
+        c->extradata[3] = spsNalu->body[3];
+
+        c->extradata[4] = 0xFC | 3;
+        c->extradata[5] = 0xE0 | 1;
 
         int spsLen = spsNalu->size;
-        extraData[6] = (spsLen >> 8) & 0x00ff;
-        extraData[7] = spsLen & 0x00ff;
+        c->extradata[6] = (spsLen >> 8) & 0x00ff;
+        c->extradata[7] = spsLen & 0x00ff;
 
         for (int i = 0; i < spsLen; ++i) {
-            extraData[8 + i] = spsNalu->body[i];
+            c->extradata[8 + i] = spsNalu->body[i];
         }
 
-        extraData[8 + spsLen] = 0x01;
+        c->extradata[8 + spsLen] = 0x01;
 
         int ppsLen = ppsNalu->size;
-        extraData[8 + spsLen + 1] = (ppsLen >> 8) & 0x00ff;
-        extraData[8 + spsLen + 2] = ppsLen & 0x00ff;
+        c->extradata[8 + spsLen + 1] = (ppsLen >> 8) & 0x00ff;
+        c->extradata[8 + spsLen + 2] = ppsLen & 0x00ff;
 
         for (int i = 0; i < ppsLen; ++i) {
-            extraData[8 + spsLen + 3 + i] = ppsNalu->body[i];
+            c->extradata[8 + spsLen + 3 + i] = ppsNalu->body[i];
         }
 
-        mVideoStream.codecCtx->extradata = extraData;
-        mVideoStream.codecCtx->extradata_size = extraDataSize;
 
+
+        ret = avformat_write_header(mAVFormatContext, nullptr);
+        if (ret < 0) {
+            //avformat_write_header error :Invalid argument
+            LOGE("avformat_write_header error :%s", av_err2str(ret));
+            return ret;
+        }else{
+            LOGE("avformat_write_header success");
+        }
+        mHeaderHasWrite = true;
     } else {
         int flag = 0;
         if (naluType == NALU_TYPE_IDR || naluType == NALU_TYPE_SEI) {
@@ -309,10 +337,12 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
 
     }
 
-    mCurAudioPacketPts = packet->timeMills;
+    mCurVideoPacketPts = packet->timeMills;
 
     logPacket(oc, &pkt);
+    LOGE("before video av_interleaved_write_frame");
     ret = av_interleaved_write_frame(oc, &pkt);
+    LOGE("after video av_interleaved_write_frame");
     av_packet_unref(&pkt);
     delete packet;
     if (ret < 0) {
@@ -332,13 +362,14 @@ void VideoPublisher::logPacket(AVFormatContext *os, AVPacket *pkt) {
 }
 
 int VideoPublisher::encode() {
-    double curVideoTime=getVideoStreamTimeInSecs();
-    double curAudioTime=getAudioStreamTimeInSecs();
-    int ret =0;
-    if (curAudioTime<curVideoTime){
-       ret= writeAudioFrame(mAVFormatContext,mAudioStream);
-    }else{
-        ret= writeVideoFrame(mAVFormatContext, mVideoStream);
+    double curVideoTime = getVideoStreamTimeInSecs();
+    double curAudioTime = getAudioStreamTimeInSecs();
+    int ret;
+    LOGI("curVideoTime:%d,curAudioTime:%d",curVideoTime,curAudioTime);
+    if (curAudioTime < curVideoTime) {
+        ret = writeAudioFrame(mAVFormatContext, mAudioStream);
+    } else {
+        ret = writeVideoFrame(mAVFormatContext, mVideoStream);
     }
     return ret;
 }
@@ -376,11 +407,23 @@ void VideoPublisher::closeStream() {
 }
 
 int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost,
-                              AVDictionary *optArg) {
+                              AVDictionary *dict) {
 
 
-    AVCodecContext* c=ost->codecCtx;
-
+    AVCodecContext *c = ost->codecCtx;
+    AVDictionary *opt = nullptr;
+    int ret = av_dict_copy(&opt, dict, 0);
+    if (ret < 0) {
+        LOGE("av_dict_copy error");
+        return ret;
+    }
+    //todo 打开解码器
+    ret = avcodec_open2(c, codec, &opt);
+    av_dict_free(&opt);
+    if (ret < 0) {
+        LOGE("avcodec_open2 error:%s", av_err2str(ret));
+        return ret;
+    }
     /**
      * AudioSpecificConfig的内容，完全可以通过ADTS的7字节头生成，具体来说，AudioSpecificConfig需要3部分数据：profile(LC,Main,HE)，sample_rate, channel，这3个数据在ADTS头里都可以找到
      * 有了这3个数据以后，可以进行合并生成2个字节，就是所谓的AudioSpecificConfig
@@ -407,11 +450,17 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
      */
 
     //AudioSpecificConfig
-    c->extradata_size=2;
-    c->extradata= static_cast<uint8_t *>(av_mallocz(2));
-    int profile = 2;
-    c->extradata[0]=(profile<< 3)|((mAudioSampleRate&0xe)>>1);
-    c->extradata[1]= ((mAudioSampleRate&0x1)<<7)|(mAudioChannels<<3);
+    c->extradata_size = 2;
+    c->extradata = static_cast<uint8_t *>(av_mallocz(2));
+
+    unsigned int profile = 2;
+    char dsi[2];
+    dsi[0] = (profile << 3) | (4 >> 1);
+    dsi[1] = ((4 & 1) << 7) | (c->channels << 3);
+    memcpy(c->extradata, dsi, 2);
+
+    // c->extradata[0]=(profile<< 3)|((4&0xe)>>1); //44100 对应 4
+    //c->extradata[1]= ((4&0x1)<<7)|(mAudioChannels<<3);
 
     /**
      * AAC音频格式有两种
@@ -422,47 +471,51 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
      * 2）相反，从MP4或者FLV或者MOV等格式文件中解封装出AAC码流（只有ES流）时，需要在解析出的AAC码流前添加ADTS头（含音频相关编解码参数）。
      */
     //aac_adtstoasc作用：只是把带ADTS头的AAC流封装进MOV/MP4等格式时，创建MPEG-4 AudioSpecificConfig（asc），并去掉ADTS header
-    mAudioBSFC= av_bitstream_filter_init("aac_adtstoasc");
+    mAudioBSFC = av_bitstream_filter_init("aac_adtstoasc");
 
 
     return 0;
 }
 
 double VideoPublisher::getVideoStreamTimeInSecs() {
-    return mCurVideoPacketPts/1000.0f;
+    LOGI("mCurVideoPacketPts:%d",mCurVideoPacketPts);
+    return mCurVideoPacketPts / 1000.0f;
 }
 
 double VideoPublisher::getAudioStreamTimeInSecs() {
-    return mCurAudioPacketPts/1000.0f;
+    LOGI("mCurAudioPacketPts:%d",mCurAudioPacketPts);
+    return mCurAudioPacketPts / 1000.0f;
 }
 
 int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
+    LOGI("enter writeAudioFrame");
     AudioPacket *packet;
     int ret = mAudioProvider(&packet, mAudioProviderCtx);
     if (ret < 0) {
         return ret;
     }
+    LOGI("get AudioPacket from mAudioProvider");
+    AVPacket pkt = {0};
+    mCurAudioPacketPts = packet->position;
+    LOGI("mCurAudioPacketPts:%d",mCurAudioPacketPts);
+    pkt.data = packet->data;
+    pkt.size = packet->size;
+    pkt.dts = mCurAudioPacketPts;
+    pkt.pts = mCurAudioPacketPts;
+    pkt.duration = 1024;
+    pkt.stream_index = ost.st->index;
 
-    AVPacket pkt={0};
-    mCurAudioPacketPts=packet->position;
-    pkt.data=packet->data;
-    pkt.size=packet->size;
-    pkt.dts=mCurAudioPacketPts;
-    pkt.pts=mCurAudioPacketPts;
-    pkt.duration=1024;
-    pkt.stream_index=ost.st->index;
-
-    AVPacket dstPkt={0};
-    ret=av_bitstream_filter_filter(mAudioBSFC,ost.codecCtx, nullptr,&dstPkt.data,&dstPkt.size,
-                               pkt.data,pkt.size,pkt.flags&AV_PKT_FLAG_KEY);
-    if (ret>=0){
-        dstPkt.pts=pkt.pts;
-        dstPkt.dts=pkt.dts;
-        dstPkt.duration=pkt.duration;
-        dstPkt.stream_index=pkt.stream_index;
+    AVPacket dstPkt = {0};
+    ret = av_bitstream_filter_filter(mAudioBSFC, ost.codecCtx, nullptr, &dstPkt.data, &dstPkt.size,
+                                     pkt.data, pkt.size, pkt.flags & AV_PKT_FLAG_KEY);
+    if (ret >= 0) {
+        dstPkt.pts = pkt.pts;
+        dstPkt.dts = pkt.dts;
+        dstPkt.duration = pkt.duration;
+        dstPkt.stream_index = pkt.stream_index;
 
         ret = av_interleaved_write_frame(oc, &pkt);
-        if (ret<0){
+        if (ret < 0) {
             LOGE("audio av_interleaved_write_frame error");
         }
         av_packet_unref(&pkt);

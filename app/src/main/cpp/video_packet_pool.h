@@ -13,6 +13,7 @@
 
 
 #define THRESHOLD_VIDEO_PACKET_QUEUE 60
+#define AUDIO_PACKET_DURATION_IN_SECS 0.04f
 #define LOG_TAG "VideoPacketPool"
 class VideoPacketPool {
 public:
@@ -27,21 +28,39 @@ public:
 
 
 
+    int enqueueAudioFrame(AudioPacket* packet);
+    int getAudioFrameQueueSize();
+    int abortAudioFrameQueue();
+    int getAudioFrame(AudioPacket** packet);
+
+
     int enqueueAudioPacket(AudioPacket* packet);
     int getAudioPacketQueueSize();
     int abortAudioPacketQueue();
     int getAudioPacket(AudioPacket** packet);
 
     static VideoPacketPool* getInstance();
+
+    bool detectDiscardAudioFrame();
+
+    bool discardAudioFrame();
+
 private:
     BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
     VideoPacket* mCurVideoPacket=0;
 
+    BlockingQueue<AudioPacket*> *mAudioFrameQueue = 0;
+
     BlockingQueue<AudioPacket*> *mAudioPktQueue = 0;
+
+    int mTotalDiscardVideoPacketDuration;
+    pthread_rwlock_t mRWLock;
 
 
     bool detectDiscardVideoPacket();
     int discardVideoGOP(int *countOfDiscardPackets, int *durationOfDiscardPackets);
+
+    void recordDropVideoFrame(int discardDuration);
 };
 
 

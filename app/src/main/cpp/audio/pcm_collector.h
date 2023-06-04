@@ -23,15 +23,15 @@ private:
     VideoPacketPool* mPool;
     AudioEncoderAdapter* mAudioEncoderAdapter;
 
-    int mAudioSampleRate;
+    int mAudioSampleRate=0;
     //每个packet的大小
-    int mBufferSizeInShort;
+    int mBufferSizeInShort=0;
     //每个packet的数据中转站
-    short* mAudioBuffer;
+    short* mAudioBuffer= nullptr;
     //当前buffer拷贝了多少个数据
-    int mBufferCursor;
+    int mBufferCursor =0;
 
-    long mStartTimeMillis;
+    long mStartTimeMillis=0;
 
 
 

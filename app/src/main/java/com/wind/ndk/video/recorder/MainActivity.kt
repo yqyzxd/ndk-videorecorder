@@ -19,7 +19,7 @@ import com.wind.ndk.video.recorder.ui.theme.NdkvideorecorderTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestPermissions(arrayOf(Manifest.permission.CAMERA)) {
+        requestPermissions(arrayOf(Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO)) {
             setContent {
                 NdkvideorecorderTheme {
                     if (it.isEmpty()) {

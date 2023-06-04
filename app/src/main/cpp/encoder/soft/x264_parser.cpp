@@ -29,7 +29,9 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
     int outBodySize;
     int outStartIndexSize;
     startIndex = findStartCode(startIndex,startIndexSize, data, size, &outBodySize,&outStartIndexSize);
-    NALU *nalu = nullptr;
+
+    int naluType = data[4] & (0x1f);
+    NALU *nalu = new NALU(naluType,data+4);
     while (startIndex>0){
 
         if (nalu!= nullptr){
@@ -37,9 +39,12 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
             nalu->size=outBodySize;
             nalus->push_back(nalu);
         }
+        if (startIndex+outStartIndexSize>=size){
+            break;
+        }
         //获取nalu type
-        int naluType = data[startIndex] & (0x1f);
-        nalu=new NALU(naluType,data+startIndex);
+        naluType = data[startIndex+outStartIndexSize] & (0x1f);
+        nalu=new NALU(naluType,data+startIndex+outStartIndexSize);
         nalu->startCodeLen=outStartIndexSize;
 
         startIndex = findStartCode(startIndex,startIndexSize, data, size, &outBodySize,&outStartIndexSize);
@@ -59,17 +64,18 @@ int X264Parser::findStartCode(int startIndex,int startIndexSize, uint8_t *data, 
                               int *outStartIndexSize) {
 
     int index=startIndex+startIndexSize;
-    while (index < dataSize && data[index] != 0 && data[index + 1] != 0 &&
-           data[index + 2] != 1) {
+    while (index < dataSize && (data[index] != 0 || data[index + 1] != 0 ||
+           data[index + 2] != 1)) {
         index++;
     }
-    if (index == 0) {
+    if (index == 0 || index>=dataSize) {
+        *outBodySize = index -(startIndex+startIndexSize);
         return -1;
     }
     //判断index-1是否为0
     //int newIndex = startIndex + 3;
     *outStartIndexSize=data[index-1]==0?4:3;
     int newIndex= data[index-1]==0? index-1:index;
-    *outBodySize = newIndex - index;
+    *outBodySize = newIndex - startIndex-startIndexSize;
     return newIndex;
 }

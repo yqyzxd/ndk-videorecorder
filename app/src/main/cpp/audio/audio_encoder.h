@@ -22,7 +22,7 @@ extern "C"{
 #define BITE_RATE 64000
 
 typedef int (*AudioFrameProvider)(short* samples,int nbSamples,int channels,double * pts,void* ctx);
-
+typedef int (*AudioPacketCollector)(AudioPacket *, void *);
 class AudioEncoder {
 private:
 
@@ -34,6 +34,7 @@ private:
     int bufferSize;
     uint8_t* samples;
 
+    int16_t mAudioNextPts;
 
     int swrBufferSize;
     uint8_t* swrBuffer;
@@ -46,33 +47,33 @@ private:
     uint8_t** convertData;
 
     //通道数
-    int channels;
+    int mChannels;
     //采样率
-    int sampleRate;
+    int mSampleRate;
     //码率
-    int bitRate;
+    int mBitRate;
 
 
 
     AudioFrameProvider mAudioFrameProvider;
     void* mAudioFrameProviderCtx;
 
+    AudioPacketCollector mAudioPacketCollector;
+    void* mAudioPacketCollectorCtx;
 
 public:
     int init(int bitRate, int channels ,int sampleRate,int bitsPerSample,const char* codecName);
-    int encode(AudioPacket** packet);
+    int encode();
     void destroy();
 
     void setAudioFrameProvider(AudioFrameProvider provider,void* ctx);
-
-    //void writeAACPacketToFile(uint8_t *data, int size);
-
+    void setAudioPacketCollector(AudioPacketCollector collector, void *ctx);
 
 private:
     int allocAudioStream(const char *codecName);
     int allocAvFrame();
 
-    void encodePacket();
+    int encodePacket();
     void addADTSToPacket(uint8_t *buffer, int size);
 };
 

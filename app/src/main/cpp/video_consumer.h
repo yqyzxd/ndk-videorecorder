@@ -25,6 +25,7 @@ public:
 
 
     static int getVideoPacketCallback(VideoPacket** pkt,void* ctx);
+    static int getAudioPacketCallback(AudioPacket** pkt,void* ctx);
 
 
 private:
@@ -35,6 +36,7 @@ private:
     bool mStop;
 
     int getVideoPacket(VideoPacket **packet);
+    int getAudioPacket(AudioPacket **packet);
 };
 
 

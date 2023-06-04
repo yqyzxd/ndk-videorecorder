@@ -162,7 +162,7 @@ int X264Encoder::encode(VideoFrame *frame) {
 
         int pts = presentationTimeInMills;
         mAVFrame->pts = pts;
-        LOGI("mAVFrame pts:%d", pts);
+       // LOGI("mAVFrame pts:%d", pts);
     }
     int ret = avcodec_send_frame(mAVCodecContext, mAVFrame);
     while (ret >= 0) {
@@ -178,6 +178,8 @@ int X264Encoder::encode(VideoFrame *frame) {
             videoPacket->size = mAvPacket->size;
             //int presentationTimeMills = mAvPacket->pts;
             videoPacket->timeMills = mAvPacket->pts;
+
+
             //mux时重新去计算pts和dts
             //videoPacket->pts=mAvPacket->pts;
             //videoPacket->dts=mAvPacket->dts;
@@ -205,7 +207,7 @@ int X264Encoder::encode(VideoFrame *frame) {
                 int headCodeLen = 4;
 
                 if (nalus->at(0)->type == NALU_TYPE_SPS) {
-                    if (mAlreadyWriteSPS) {
+                    if (!mAlreadyWriteSPS) {
                         mAlreadyWriteSPS = true;
                         NALU *spsNALU = nalus->at(0);
                         uint8 *spsData = spsNALU->body;
@@ -269,7 +271,7 @@ int X264Encoder::encode(VideoFrame *frame) {
 
 
                     }
-                    delete nalu;
+                    //delete nalu;
                 }
 
                 mVideoPacketPool->enqueueVideoPacket(buildVideoPacket(frameBuffer,frameBufferSize,mAVFrame->pts,mAVFrame->pts,mAVFrame->pkt_dts));
@@ -308,6 +310,8 @@ VideoPacket *X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeM
     pkt->size = size;
     pkt->pts=pts;
     pkt->dts=dts;
+
+    LOGI("x264 AVPacket timeMillis:%d,pts:%d,dts:%d",pts,dts);
     return pkt;
 }
 

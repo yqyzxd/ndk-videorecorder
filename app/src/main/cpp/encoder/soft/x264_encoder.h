@@ -41,7 +41,7 @@ private:
 
    bool mPrinted;
     X264Parser* mX264Parser;
-    bool mAlreadyWriteSPS;
+    bool mAlreadyWriteSPS =false;
 
     VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts);
 };

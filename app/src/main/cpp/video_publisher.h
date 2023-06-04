@@ -74,8 +74,8 @@ protected:
 
 
 
-    double mCurAudioPacketPts;
-    double mCurVideoPacketPts;
+    double mCurAudioPacketPts=0;
+    double mCurVideoPacketPts=0;
 
 
     AVOutputFormat* mAVOutputFormat;
@@ -88,7 +88,7 @@ protected:
     AVCodec* mAudioCodec;
     AVBitStreamFilterContext *mAudioBSFC;
 
-    int addStream(OutputStream *outputStream, AVFormatContext* oc,AVCodec **codec, AVCodecID id);
+    int addStream(OutputStream *outputStream, AVFormatContext* oc,AVCodec **codec, AVCodecID id,char* codecName);
 
     int openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *dict);
 

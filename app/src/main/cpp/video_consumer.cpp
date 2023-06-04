@@ -16,6 +16,14 @@ int VideoConsumer::getVideoPacketCallback(VideoPacket **pkt, void *ctx) {
     VideoConsumer* consumer= static_cast<VideoConsumer *>(ctx);
     return consumer->getVideoPacket(pkt);
 }
+int VideoConsumer::getAudioPacketCallback(AudioPacket **pkt, void *ctx) {
+    VideoConsumer* consumer= static_cast<VideoConsumer *>(ctx);
+    return consumer->getAudioPacket(pkt);
+}
+
+int VideoConsumer::getAudioPacket(AudioPacket **packet) {
+   return mVideoPacketPool->getAudioPacket(packet);
+}
 
 int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitrate, int videoWidth,
                         int videoHeight, int audioBitrate, int audioSampleRate, int audioChannels) {
@@ -25,6 +33,7 @@ int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitr
     mVideoPacketPool=VideoPacketPool::getInstance();
     mPublisher=new VideoPublisher();
     mPublisher->setVideoPacketProvider(getVideoPacketCallback,this);
+    mPublisher->setAudioPacketProvider(getAudioPacketCallback,this);
     return mPublisher->init(outputUri,videoFrameRate,videoBitrate,videoWidth,videoHeight,audioBitrate,audioSampleRate,audioChannels);
 
 }
