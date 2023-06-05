@@ -30,6 +30,7 @@ VideoPublisher::init(const char *outputUri, int videoFrameRate, int videoBitrate
     mAudioSampleRate = audioSampleRate;
     mAudioChannels = audioChannels;
 
+    mHeaderHasWrite= false;
 
     int ret = avformat_alloc_output_context2(&mAVFormatContext, nullptr, "flv", outputUri);
     if (ret < 0) {
@@ -58,16 +59,16 @@ VideoPublisher::init(const char *outputUri, int videoFrameRate, int videoBitrate
 
 
 
-/**
- * Print detailed information about the input or output format, such as
- * duration, bitrate, streams, container, programs, metadata, side data,
- * codec and time base.
- */
+    /**
+     * Print detailed information about the input or output format, such as
+     * duration, bitrate, streams, container, programs, metadata, side data,
+     * codec and time base.
+     */
     av_dump_format(mAVFormatContext,
                    0, outputUri, 1);
 
     if ((fmt->flags & AVFMT_NOFILE) == 0) {
-//todo 设置超时回调
+        //todo 设置超时回调
         ret = avio_open(&mAVFormatContext->pb, outputUri, AVIO_FLAG_WRITE);
         if (ret < 0) {
             LOGE("avio_open error :", ret);
@@ -191,18 +192,7 @@ int VideoPublisher::openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream 
         LOGE("avcodec_open2 error");
         return ret;
     }
-    /* allocate and init a re-usable frame */
-    ost->avFrame = allocPicture(c->pix_fmt, c->width, c->height);
-    if (ost->avFrame == nullptr) {
-        return -1;
-    }
-    ost->tmpFrame = nullptr;
-    if (c->pix_fmt != AV_PIX_FMT_YUV420P) {
-        ost->tmpFrame = allocPicture(AV_PIX_FMT_YUV420P, c->width, c->height);
-        if (ost->tmpFrame == nullptr) {
-            return -1;
-        }
-    }
+
     /* copy the stream parameters to the muxer */
     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
     if (ret < 0) {
@@ -232,14 +222,15 @@ AVFrame *VideoPublisher::allocPicture(AVPixelFormat pix_fmt, int width, int heig
 }
 
 bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
-    LOGI("enter writeVideoFrame");
+
     VideoPacket *packet;
+    LOGI("before mVideoProvider");
     int ret = mVideoProvider(&packet, mVideoProviderCtx);
+    LOGI("after mVideoProvider: %d",ret);
     if (ret < 0) {
         return false;
     }
     AVCodecContext *c =ost.codecCtx;
-    LOGI("get VideoPacket from mVideoProvider");
     //栈上分配
     AVPacket pkt = {0};
     pkt.stream_index = ost.st->index;
@@ -308,16 +299,19 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         }
 
 
-
+        /**
+         * 注意：avcodec_open2之后如果没有执行avcodec_parameters_from_context将导致avformat_write_header  return -22  Invalid argument
+         */
         ret = avformat_write_header(mAVFormatContext, nullptr);
         if (ret < 0) {
             //avformat_write_header error :Invalid argument
             LOGE("avformat_write_header error :%s", av_err2str(ret));
             return ret;
         }else{
+            mHeaderHasWrite = true;
             LOGE("avformat_write_header success");
         }
-        mHeaderHasWrite = true;
+
     } else {
         int flag = 0;
         if (naluType == NALU_TYPE_IDR || naluType == NALU_TYPE_SEI) {
@@ -399,10 +393,11 @@ int VideoPublisher::stop() {
 
 void VideoPublisher::closeStream() {
     avcodec_free_context(&mVideoStream.codecCtx);
-    av_frame_free(&mVideoStream.avFrame);
-    av_frame_free(&mVideoStream.tmpFrame);
-    sws_freeContext(mVideoStream.swsCtx);
-    swr_free(&mVideoStream.swrCtx);
+    avcodec_free_context(&mAudioStream.codecCtx);
+    //av_frame_free(&mVideoStream.avFrame);
+    //av_frame_free(&mVideoStream.tmpFrame);
+    //sws_freeContext(mVideoStream.swsCtx);
+    //swr_free(&mVideoStream.swrCtx);
 
 }
 
@@ -474,6 +469,11 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
     mAudioBSFC = av_bitstream_filter_init("aac_adtstoasc");
 
 
+    /* copy the stream parameters to the muxer */
+    ret=avcodec_parameters_from_context(ost->st->codecpar, c);
+    if (ret<0){
+        LOGE("avcodec_parameters_from_context error");
+    }
     return 0;
 }
 

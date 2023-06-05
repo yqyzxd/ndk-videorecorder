@@ -44,11 +44,19 @@ class VideoRecordViewModel(
             )
         }else{
             mVideoRecorder.stop()
+            mRecording=false
         }
 
     }
 
 
+    override fun onCleared() {
+        super.onCleared()
+        if (mRecording){
+            mVideoRecorder.stop()
+            mRecording=false
+        }
+    }
 
 
     companion object{

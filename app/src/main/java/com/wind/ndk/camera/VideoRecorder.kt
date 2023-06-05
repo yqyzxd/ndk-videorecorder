@@ -19,7 +19,7 @@ class VideoRecorder(
     private val mAudioRecorder:AudioRecorder
     ) {
 
-
+    private var mStop = false
     fun startRecord(
         outputUri: String,
         videoFrameRate: Int,
@@ -50,8 +50,12 @@ class VideoRecorder(
     }
 
     fun stop() {
-        mCameraPreviewScheduler.stopEncode()
-        stopConsumer()
+        if (!mStop){
+            mStop=true
+            mCameraPreviewScheduler.stopEncode()
+            stopConsumer()
+        }
+
 
     }
 

@@ -18,6 +18,7 @@ int PcmCollector::init(int audioSampleRate, int bufferSizeInShort) {
     mStartTimeMillis=0;
     mAudioBuffer=new short[mBufferSizeInShort];
 
+    mAudioEncoderAdapter= nullptr;
     return 0;
 }
 
@@ -86,6 +87,10 @@ void PcmCollector::stop() {
     enqueue();
     mStartTimeMillis=0;
     delete[] mAudioBuffer;
+
+    if (mAudioEncoderAdapter!= nullptr){
+        mAudioEncoderAdapter->dealloc();
+    }
 
 
 }

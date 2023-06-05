@@ -83,6 +83,9 @@ public:
         mLock->lock();
         if (this->mSize>=this->mCapacity){
             mCond->await();
+            if (this->mAbort){
+                return -1;
+            }
         }
         Node<T>* node=new Node<T>(elem, nullptr);
         if (head== nullptr){
@@ -103,6 +106,9 @@ public:
         mLock->lock();
         if (this->mSize<=0){
             mCond->await();
+            if (this->mAbort){
+                return -1;
+            }
         }
         if (head== nullptr){
             return -1;

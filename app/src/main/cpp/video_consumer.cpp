@@ -28,7 +28,7 @@ int VideoConsumer::getAudioPacket(AudioPacket **packet) {
 int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitrate, int videoWidth,
                         int videoHeight, int audioBitrate, int audioSampleRate, int audioChannels) {
 
-
+    av_packet_rescale_ts
     mStop= false;
     mVideoPacketPool=VideoPacketPool::getInstance();
     mPublisher=new VideoPublisher();
@@ -39,8 +39,9 @@ int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitr
 }
 void VideoConsumer::run() {
     while (!mStop){
-        //LOGI("VideoConsumer run");
+        LOGI("before publisher encode");
         int ret=mPublisher->encode();
+        LOGI("after publisher encode");
         if (ret<0){
             //error
             break;
@@ -51,10 +52,13 @@ void VideoConsumer::run() {
 }
 
 void VideoConsumer::stop() {
-    mVideoPacketPool->abortVideoPacketQueue();
-    mStop= true;
-    LOGI("VideoConsumer stop");
-    //join();
+    if (!mStop){
+        mVideoPacketPool->abortVideoPacketQueue();
+        mVideoPacketPool->abortAudioPacketQueue();
+        mStop= true;
+        join();
+    }
+
 }
 int VideoConsumer::getVideoPacket(VideoPacket **packet) {
    return mVideoPacketPool->getVideoPacket(packet);
