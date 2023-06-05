@@ -26,6 +26,7 @@ VideoPacketPool *VideoPacketPool::getInstance() {
 int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
     if (mVideoPktQueue != nullptr) {
         //检测是否需要进行丢帧
+        //todo 存在卡住线程的情况，需要检查
         while (detectDiscardVideoPacket()) {
             int countOfDiscardPackets = 0;
             int durationOfDiscardPackets = 0;

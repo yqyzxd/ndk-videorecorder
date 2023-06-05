@@ -1,5 +1,6 @@
 package com.wind.ndk.camera
 
+import android.util.Log
 import com.wind.ndk.audio.recorder.AudioRecorder
 import com.wind.ndk.audio.recorder.PcmCollector
 import kotlin.concurrent.thread
@@ -52,8 +53,11 @@ class VideoRecorder(
     fun stop() {
         if (!mStop){
             mStop=true
+            Log.i("VideoRecorder","mCameraPreviewScheduler.stopEncode")
             mCameraPreviewScheduler.stopEncode()
+            Log.e("VideoRecorder","before stopConsumer")
             stopConsumer()
+            Log.e("VideoRecorder","after stopConsumer")
         }
 
 

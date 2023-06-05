@@ -39,8 +39,9 @@ JNIEXPORT void JNICALL Java_com_wind_ndk_audio_recorder_PcmCollector_nativeConsu
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_wind_ndk_audio_recorder_PcmCollector_nativeDealloc
-  (JNIEnv *, jobject, jlong){
-
+  (JNIEnv *, jobject, jlong ptr){
+    PcmCollector* collector= reinterpret_cast<PcmCollector *>(ptr);
+    collector->stop();
 }
 
 #ifdef __cplusplus

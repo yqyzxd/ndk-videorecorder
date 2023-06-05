@@ -41,10 +41,13 @@ void SoftVideoEncoderAdapter::runEncode() {
         while (!mQuit) {
 
             VideoFrame *videoFrame = nullptr;
+            //LOGE("before mVideoFrameQueue take");
             int ret = mVideoFrameQueue->take(&videoFrame);
+            LOGE("after mVideoFrameQueue take");
             if (ret == 0 && videoFrame!= nullptr) {
                 mEncoder->encode(videoFrame);
             }
+            LOGE("after mEncoder->encode");
             if (videoFrame != nullptr) {
                 delete videoFrame;
                 videoFrame = nullptr;
@@ -52,6 +55,7 @@ void SoftVideoEncoderAdapter::runEncode() {
 
         }
     }
+    LOGI("exit runEncode while");
     mEncoder->dealloc();
     delete mEncoder;
     mEncoder = nullptr;
@@ -121,16 +125,20 @@ void SoftVideoEncoderAdapter::encode(int textureId) {
 }
 
 void SoftVideoEncoderAdapter::stop() {
-    mQuit = true;
+
     if (mGLOffScreenSurface!= nullptr){
         mGLOffScreenSurface->surfaceDestroyed();
         mGLOffScreenSurface->dealloc();
         mGLOffScreenSurface= nullptr;
     }
     if (mVideoFrameQueue!= nullptr){
+        LOGE("before mVideoFrameQueue flush");
         mVideoFrameQueue->flush();
+        mQuit = true;
         if (mEncodeThread != nullptr) {
-            mEncodeThread->join();
+            LOGE("before mEncodeThread->join()");
+            int ret=mEncodeThread->join();
+            LOGE("after mEncodeThread->join() ret:%d",ret);
             delete mEncodeThread;
             mEncodeThread = nullptr;
         }

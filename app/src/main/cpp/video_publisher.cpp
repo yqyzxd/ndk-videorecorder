@@ -49,7 +49,7 @@ VideoPublisher::init(const char *outputUri, int videoFrameRate, int videoBitrate
         openVideo(mAVFormatContext, mVideoCodec, &mVideoStream, opt);
     }
     //fmt->audio_codec = AV_CODEC_ID_AAC;//使用fdk-aac编码器
-
+    //注意：要使用libfdk_aac编码器必须使用avcodec_find_encoder_by_name，如果传入AV_CODEC_ID_AAC那么得到的是内置aac编码器，该内置编码器的sample_fmt为FLT而不是S16
     ret = addStream(&mAudioStream, mAVFormatContext, &mAudioCodec, AV_CODEC_ID_NONE, "libfdk_aac");
     if (ret < 0) {
         LOGE("addStream error :", ret);

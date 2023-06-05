@@ -4,6 +4,7 @@
 
 #include "audio_encoder_adapter.h"
 
+#define LOG_TAG "AudioEncoderAdapter"
 AudioEncoderAdapter::AudioEncoderAdapter() {
 
     mPacketBufferCursor=0;
@@ -84,17 +85,19 @@ void AudioEncoderAdapter::run() {
     mAudioEncoder->setAudioFrameProvider(provideAudioFrameCallback, this);
     mAudioEncoder->setAudioPacketCollector(audioPacketCollector,this);
     while (mRunning) {
-        LOGI("audio encoder adapter run");
+        LOGI("before audio encoder adapter run");
         mAudioEncoder->encode();
+        LOGI("after audio encoder adapter run");
     }
     mAudioEncoder->destroy();
 }
 
 void AudioEncoderAdapter::dealloc() {
     mRunning = false;
-    mAudioPool->abortAudioPacketQueue();
+    mAudioPool->abortAudioFrameQueue();
+    LOGI("before encoder adapter dealloc join");
     join();
-
+    LOGI("after encoder adapter dealloc join");
     if (mPacketBuffer != nullptr) {
         delete[] mPacketBuffer;
         mPacketBuffer = nullptr;

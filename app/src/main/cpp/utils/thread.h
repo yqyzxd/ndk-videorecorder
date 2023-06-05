@@ -21,7 +21,7 @@ public:
     /**线程函数*/
     virtual void run();
 
-    virtual void join();
+    virtual int join();
 
 private:
     pthread_t threadId;

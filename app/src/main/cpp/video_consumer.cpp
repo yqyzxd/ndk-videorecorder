@@ -28,7 +28,7 @@ int VideoConsumer::getAudioPacket(AudioPacket **packet) {
 int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitrate, int videoWidth,
                         int videoHeight, int audioBitrate, int audioSampleRate, int audioChannels) {
 
-    av_packet_rescale_ts
+
     mStop= false;
     mVideoPacketPool=VideoPacketPool::getInstance();
     mPublisher=new VideoPublisher();
@@ -47,16 +47,21 @@ void VideoConsumer::run() {
             break;
         }
     }
-    LOGI("VideoConsumer stop run");
+
     mPublisher->stop();
+    LOGI("VideoConsumer stop run");
 }
 
 void VideoConsumer::stop() {
+    LOGE("enter VideoConsumer stop:%d",mStop);
     if (!mStop){
         mVideoPacketPool->abortVideoPacketQueue();
         mVideoPacketPool->abortAudioPacketQueue();
+        mVideoPacketPool->abortAudioFrameQueue();
         mStop= true;
+        LOGE("before VideoConsumer stop join");
         join();
+        LOGE("after VideoConsumer stop join");
     }
 
 }

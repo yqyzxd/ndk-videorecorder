@@ -84,13 +84,14 @@ void PcmCollector::enqueue() {
 
 void PcmCollector::stop() {
     //剩余数据插入队列
-    enqueue();
-    mStartTimeMillis=0;
-    delete[] mAudioBuffer;
+    //enqueue();
+
 
     if (mAudioEncoderAdapter!= nullptr){
         mAudioEncoderAdapter->dealloc();
+        mAudioEncoderAdapter= nullptr;
     }
 
-
+    mStartTimeMillis=0;
+    delete[] mAudioBuffer;
 }

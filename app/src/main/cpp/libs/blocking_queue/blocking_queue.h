@@ -133,6 +133,9 @@ public:
     }
     //todo 清空队列
     void flush() override{
+        if (this->mAbort){
+            return;
+        }
         mLock->lock();
         this->mAbort=true;
         head= nullptr;

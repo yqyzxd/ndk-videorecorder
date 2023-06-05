@@ -19,6 +19,7 @@ public:
     int init(int audioSampleRate, int bufferSizeInShort);
 
     void collect(short *data, int sizeInShort);
+    void stop();
 private:
     VideoPacketPool* mPool;
     AudioEncoderAdapter* mAudioEncoderAdapter;
@@ -37,7 +38,7 @@ private:
 
     void enqueue();
 
-    void stop();
+
 };
 
 

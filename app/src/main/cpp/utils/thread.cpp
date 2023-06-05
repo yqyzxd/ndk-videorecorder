@@ -30,6 +30,7 @@ void Thread::start() {
     pthread_create(&threadId,0,threadCallback,this);
 }
 
-void Thread::join() {
-    pthread_join(threadId,0);
+int Thread::join() {
+    return pthread_join(threadId,0);
+
 }
