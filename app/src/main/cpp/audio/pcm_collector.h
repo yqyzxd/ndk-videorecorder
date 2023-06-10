@@ -32,7 +32,7 @@ private:
     //当前buffer拷贝了多少个数据
     int mBufferCursor =0;
 
-    long mStartTimeMillis=0;
+    int64_t mStartTimeMillis=0;
 
 
 

@@ -128,7 +128,7 @@ public:
         }else{
             *elem=head->item;
         }
-        mLock->lock();
+        mLock->unlock();
         return 0;
     }
     //todo 清空队列

@@ -319,8 +319,9 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         }
 
 
+        int size= packet->size;
         pkt.data = packet->buffer;
-        pkt.size = packet->size;
+        pkt.size = size;
         //计算pts/dts
         pkt.pts = packet->pts;
         pkt.dts = packet->dts;
@@ -329,14 +330,24 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(&pkt, ost.codecCtx->time_base, ost.st->time_base);
 
+        if(pkt.data[0] == 0x00 && pkt.data[1] == 0x00 &&
+           pkt.data[2] == 0x00 && pkt.data[3] == 0x01){
+            size -= 4;
+            pkt.data[0] = ((size ) >> 24) & 0x00ff;
+            pkt.data[1] = ((size ) >> 16) & 0x00ff;
+            pkt.data[2] = ((size ) >> 8) & 0x00ff;
+            pkt.data[3] = ((size )) & 0x00ff;
+        }
+
+        c->frame_number++;
     }
 
     mCurVideoPacketPts = packet->timeMills;
-
+    LOGE("packet->timeMills:%ld",mCurVideoPacketPts);
     logPacket(oc, &pkt);
-    LOGE("before video av_interleaved_write_frame");
+
     ret = av_interleaved_write_frame(oc, &pkt);
-    LOGE("after video av_interleaved_write_frame");
+    LOGE("video av_interleaved_write_frame:%d",ret);
     av_packet_unref(&pkt);
     delete packet;
     if (ret < 0) {
@@ -347,7 +358,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
 
 void VideoPublisher::logPacket(AVFormatContext *os, AVPacket *pkt) {
     AVRational *time_base = &os->streams[pkt->stream_index]->time_base;
-
+    //pts:109208 pts_time:109.208 dts:NOPTS dts_time:NOPTS duration:0 duration_time:0 stream_index:0
     LOGI("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
          av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
          av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
@@ -356,10 +367,10 @@ void VideoPublisher::logPacket(AVFormatContext *os, AVPacket *pkt) {
 }
 
 int VideoPublisher::encode() {
-    double curVideoTime = getVideoStreamTimeInSecs();
-    double curAudioTime = getAudioStreamTimeInSecs();
+    int64_t curVideoTime = getVideoStreamTimeInSecs();
+    int64_t curAudioTime = getAudioStreamTimeInSecs();
     int ret;
-    LOGI("curVideoTime:%d,curAudioTime:%d",curVideoTime,curAudioTime);
+    LOGI("curVideoTime:%ld,curAudioTime:%ld",curVideoTime,curAudioTime);
     if (curAudioTime < curVideoTime) {
         ret = writeAudioFrame(mAVFormatContext, mAudioStream);
     } else {
@@ -477,14 +488,16 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
     return 0;
 }
 
-double VideoPublisher::getVideoStreamTimeInSecs() {
-    LOGI("mCurVideoPacketPts:%d",mCurVideoPacketPts);
-    return mCurVideoPacketPts / 1000.0f;
+int64_t VideoPublisher::getVideoStreamTimeInSecs() {
+    //LOGI("mCurVideoPacketPts:%ld",mCurVideoPacketPts);
+    //return mCurVideoPacketPts / 1000.0f;
+    return mCurVideoPacketPts;
 }
 
-double VideoPublisher::getAudioStreamTimeInSecs() {
-    LOGI("mCurAudioPacketPts:%d",mCurAudioPacketPts);
-    return mCurAudioPacketPts / 1000.0f;
+int64_t VideoPublisher::getAudioStreamTimeInSecs() {
+   // LOGI("mCurAudioPacketPts:%ld",mCurAudioPacketPts);
+    //return mCurAudioPacketPts / 1000.0f;
+    return mCurAudioPacketPts;
 }
 
 int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
@@ -515,6 +528,7 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
         dstPkt.stream_index = pkt.stream_index;
 
         ret = av_interleaved_write_frame(oc, &pkt);
+        LOGE("audio av_interleaved_write_frame:%d",ret);
         if (ret < 0) {
             LOGE("audio av_interleaved_write_frame error");
         }

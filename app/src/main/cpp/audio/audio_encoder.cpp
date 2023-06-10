@@ -111,15 +111,13 @@ int AudioEncoder::encodePacket() {
         encodeFrame=inputFrame;
     }
 
-    //pkt.stream_index=0;
-    pkt.duration=AV_NOPTS_VALUE;
-    pkt.pts=pkt.dts=mAudioNextPts;
-    mAudioNextPts=+encodeFrame->nb_samples;
-   // pkt.data=samples;
-    //pkt.size=bufferSize;
+
+    encodeFrame->pts=mAudioNextPts;
+    mAudioNextPts+=encodeFrame->nb_samples;
 
 
-    LOGI("avcodec_send_frame");
+
+    //LOGI("avcodec_send_frame");
     int ret=avcodec_send_frame(avCodecContext,encodeFrame);
     if (ret<0){
         LOGE("avcodec_send_frame error return %d",ret);
@@ -135,16 +133,18 @@ int AudioEncoder::encodePacket() {
             return -1;
         }
         //writeAACPacketToFile(pkt.data,pkt.size);
-        if (avCodecContext->coded_frame&& avCodecContext->coded_frame->pts!=AV_NOPTS_VALUE){
+        if (encodeFrame&& encodeFrame->pts!=AV_NOPTS_VALUE){
             //todo pts为什么是这么设置？ a * bq / cq
-            pkt.pts= av_rescale_q(avCodecContext->coded_frame->pts,avCodecContext->time_base,timeBase);
+            LOGI("avaudio:av_rescale_q");
+            pkt.pts= av_rescale_q(encodeFrame->pts,avCodecContext->time_base,timeBase);
         }
 
+        LOGI("avaudio:%ld",pkt.pts);
         AudioPacket* outPacket=new AudioPacket();
         outPacket->data=new byte[pkt.size];
         memcpy(outPacket->data,pkt.data,pkt.size);
         outPacket->size=pkt.size;
-        outPacket->position=(float)(pkt.pts * av_q2d(timeBase) * 1000.0f);
+        outPacket->position=(pkt.pts * av_q2d(timeBase) * 1000.0f);
 
         mAudioPacketCollector(outPacket,mAudioPacketCollectorCtx);
 

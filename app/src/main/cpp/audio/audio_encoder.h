@@ -34,7 +34,7 @@ private:
     int bufferSize;
     uint8_t* samples;
 
-    int16_t mAudioNextPts;
+    int64_t mAudioNextPts;
 
     int swrBufferSize;
     uint8_t* swrBuffer;

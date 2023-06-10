@@ -34,7 +34,7 @@ private:
     int mPacketBufferSize;
     short* mPacketBuffer;
     int mPacketBufferCursor;
-    double mPacketBufferPresentationTimeMillis;
+    int64_t mPacketBufferPresentationTimeMillis;
 
     int mAudioChannels;
     int mAudioBitrate;

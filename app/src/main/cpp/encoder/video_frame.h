@@ -11,8 +11,8 @@
 #include <cstdint>
 #include "../utils/types.h"
 #include "soft/x264_parser.h"
-
-
+#define LOG_TAG "VideoFrame"
+#include "../utils/log.h"
 class VideoFrame {
 public:
     VideoFrame(){
@@ -53,6 +53,7 @@ public:
         if(NULL != buffer){
             nalu_type = (buffer[4] & 0x1F);
         }
+        LOGI("nalu_type:%d",nalu_type);
         return nalu_type;
     }
 public:

@@ -9,7 +9,7 @@ typedef struct AudioPacket {
     byte *data= nullptr;
     short* buffer= nullptr;
     int size=0;
-    float position=0;
+    int64_t position=0;
 
     ~AudioPacket() {
         if (data != nullptr) {

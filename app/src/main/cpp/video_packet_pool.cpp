@@ -26,13 +26,18 @@ VideoPacketPool *VideoPacketPool::getInstance() {
 int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
     if (mVideoPktQueue != nullptr) {
         //检测是否需要进行丢帧
+        if (mVideoPktQueue->size()>THRESHOLD_VIDEO_PACKET_QUEUE){
+            LOGI("enqueueVideoPacket() size:%d",mVideoPktQueue->size());
+        }
+
         //todo 存在卡住线程的情况，需要检查
         while (detectDiscardVideoPacket()) {
+            LOGI("detectDiscardVideoPacket() ture");
             int countOfDiscardPackets = 0;
             int durationOfDiscardPackets = 0;
 
-
             int ret = discardVideoGOP(&countOfDiscardPackets, &durationOfDiscardPackets);
+            LOGI("discardVideoGOP() return");
             if (ret < 0) {
                 //discard error
                 break;
@@ -45,7 +50,7 @@ int VideoPacketPool::enqueueVideoPacket(VideoPacket *packet) {
             int duration = packet->timeMills - mCurVideoPacket->timeMills;
             mCurVideoPacket->duration = duration;
             mVideoPktQueue->put(mCurVideoPacket);
-            LOGI("enqueueVideoPacket：%d",mVideoPktQueue->size());
+            //LOGI("enqueueVideoPacket：%d",mVideoPktQueue->size());
         }
         mCurVideoPacket = packet;
     }
@@ -65,7 +70,7 @@ int VideoPacketPool::discardVideoGOP(int *countOfDiscardPackets, int *durationOf
     int ret = mVideoPktQueue->peek(&videoPacket);
     bool isFirstPacket = true;
     while (ret >= 0) {
-
+        LOGI("discardVideoGOP()");
         if (isFirstPacket) {
             isFirstPacket = false;
             if (videoPacket->getNALUType() == NALU_TYPE_IDR) {

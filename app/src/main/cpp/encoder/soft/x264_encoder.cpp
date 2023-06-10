@@ -62,10 +62,10 @@ int X264Encoder::init(int width, int height, int bitRate, int frameRate) {
 
 
     //minimum bitrate
-    mAVCodecContext->rc_min_rate = bitRate - 30 * 1000;
-    mAVCodecContext->rc_max_rate = bitRate + 30 * 1000;
+    //mAVCodecContext->rc_min_rate = bitRate - 30 * 1000;
+    //mAVCodecContext->rc_max_rate = bitRate + 30 * 1000;
     //解码器位流缓冲区大小
-    mAVCodecContext->rc_buffer_size = bitRate * 2;
+    //mAVCodecContext->rc_buffer_size = bitRate * 2;
 
     //av_opt_set(mAVCodecContext->priv_data, "preset", "slow", 0);
     //x264独有的参数
@@ -96,35 +96,7 @@ int X264Encoder::init(int width, int height, int bitRate, int frameRate) {
     mYUY2Frame->height = mAVCodecContext->height;
     av_frame_get_buffer(mYUY2Frame, 0);
 
-    /*int bufferSizeInYUV420 = av_image_get_buffer_size(mAVCodecContext->pix_fmt,
-                                                      mAVCodecContext->width,
-                                                      mAVCodecContext->height, 0);
-    if (bufferSizeInYUV420 < 0) {
-        LOGE("av_image_get_buffer_size error");
-    }
-    yuv420BufferSrc = (uint8_t *) av_malloc(bufferSizeInYUV420);
-    ret=av_image_fill_arrays(mAVFrame->data, mAVFrame->linesize, yuv420BufferSrc,
-                         mAVCodecContext->pix_fmt, mAVCodecContext->width, mAVCodecContext->height,
-                         0);
-    if (ret<0){
-        LOGE("av_image_fill_arrays error");
-    }
 
-    /////YUY2Frame/////
-    mYUY2Frame = av_frame_alloc();
-    int bufferSizeInYUY2 = av_image_get_buffer_size(AV_PIX_FMT_YUYV422,
-                                                    mAVCodecContext->width, mAVCodecContext->height,
-                                                    0);
-    if (bufferSizeInYUY2 < 0) {
-        LOGE("av_image_get_buffer_size error");
-    }
-    yuy2BufferSrc = (uint8_t *) av_malloc(bufferSizeInYUY2);
-    ret=av_image_fill_arrays(mYUY2Frame->data, mYUY2Frame->linesize, yuy2BufferSrc, AV_PIX_FMT_YUYV422,
-                         mAVCodecContext->width, mAVCodecContext->height, 0);
-
-    if (ret<0){
-        LOGE("av_image_fill_arrays error");
-    }*/
     return 0;
 }
 
@@ -158,11 +130,11 @@ int X264Encoder::encode(VideoFrame *frame) {
                            mAVFrame->data[2], mAVFrame->linesize[2],
                            mAVCodecContext->width, mAVCodecContext->height);
 
-        int presentationTimeInMills = frame->timeInMills;
+        int64_t presentationTimeInMills = frame->timeInMills;
 
-        int pts = presentationTimeInMills;
+        int64_t pts = presentationTimeInMills;
         mAVFrame->pts = pts;
-       // LOGI("mAVFrame pts:%d", pts);
+        LOGI("mAVFrame pts:%d", pts);
     }
     int ret = avcodec_send_frame(mAVCodecContext, mAVFrame);
     while (ret >= 0) {
@@ -172,7 +144,7 @@ int X264Encoder::encode(VideoFrame *frame) {
 
             // LOGE("Write packet %3ld (size=%5d)\n", mAvPacket->pts, mAvPacket->size);
             //fwrite(mAvPacket->data,1,mAvPacket->size,h264File);//生成h264文件
-            //LOGI("pkt : {%ld, %ld}", mAvPacket->pts, mAvPacket->dts);
+            LOGI("pkt : {%ld, %ld}", mAvPacket->pts, mAvPacket->dts);
             VideoPacket *videoPacket = new VideoPacket();
             videoPacket->buffer = mAvPacket->data;
             videoPacket->size = mAvPacket->size;
@@ -274,7 +246,7 @@ int X264Encoder::encode(VideoFrame *frame) {
                     //delete nalu;
                 }
 
-                mVideoPacketPool->enqueueVideoPacket(buildVideoPacket(frameBuffer,frameBufferSize,mAVFrame->pts,mAVFrame->pts,mAVFrame->pkt_dts));
+                mVideoPacketPool->enqueueVideoPacket(buildVideoPacket(frameBuffer,frameBufferSize,mAvPacket->pts,mAvPacket->pts,mAvPacket->dts));
 
             }
 
@@ -311,7 +283,7 @@ VideoPacket *X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeM
     pkt->pts=pts;
     pkt->dts=dts;
 
-    LOGI("x264 AVPacket timeMillis:%d,pts:%d,dts:%d",pts,dts);
+    LOGI("x264 AVPacket timeMillis:%d,pts:%d,dts:%d",timeMillis,pts,dts);
     return pkt;
 }
 

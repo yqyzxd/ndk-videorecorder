@@ -74,8 +74,8 @@ protected:
 
 
 
-    double mCurAudioPacketPts=0;
-    double mCurVideoPacketPts=0;
+    int64_t mCurAudioPacketPts=0;
+    int64_t mCurVideoPacketPts=0;
 
 
     AVOutputFormat* mAVOutputFormat;
@@ -105,9 +105,9 @@ protected:
     int openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt);
 
 
-    double getVideoStreamTimeInSecs();
+    int64_t getVideoStreamTimeInSecs();
 
-    double getAudioStreamTimeInSecs();
+    int64_t getAudioStreamTimeInSecs();
 
     int writeAudioFrame(AVFormatContext *oc, OutputStream ost);
 };
