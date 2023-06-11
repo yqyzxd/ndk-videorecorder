@@ -95,9 +95,9 @@ void AudioEncoderAdapter::run() {
 void AudioEncoderAdapter::dealloc() {
     mRunning = false;
     mAudioPool->abortAudioFrameQueue();
-    LOGI("before encoder adapter dealloc join");
+    //LOGI("before encoder adapter dealloc join");
     join();
-    LOGI("after encoder adapter dealloc join");
+    //LOGI("after encoder adapter dealloc join");
     if (mPacketBuffer != nullptr) {
         delete[] mPacketBuffer;
         mPacketBuffer = nullptr;

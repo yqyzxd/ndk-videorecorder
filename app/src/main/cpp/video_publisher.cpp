@@ -193,12 +193,12 @@ int VideoPublisher::openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream 
         return ret;
     }
 
-    /* copy the stream parameters to the muxer */
+    /* copy the stream parameters to the muxer
     ret = avcodec_parameters_from_context(ost->st->codecpar, c);
     if (ret < 0) {
         LOGE("avcodec_parameters_from_context error:%d", ret);
         return ret;
-    }
+    }*/
 
     return 0;
 }
@@ -297,8 +297,12 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         for (int i = 0; i < ppsLen; ++i) {
             c->extradata[8 + spsLen + 3 + i] = ppsNalu->body[i];
         }
-
-
+        //重要：必须在avformat_write_header之前讲extradata复制到AVStream的AVCodecParameters中，这样播放端在播放时才能获取到设置的extradata
+        ret = avcodec_parameters_from_context(ost.st->codecpar, c);
+        if (ret < 0) {
+            LOGE("avcodec_parameters_from_context error:%d", ret);
+            return ret;
+        }
         /**
          * 注意：avcodec_open2之后如果没有执行avcodec_parameters_from_context将导致avformat_write_header  return -22  Invalid argument
          */
@@ -330,6 +334,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(&pkt, ost.codecCtx->time_base, ost.st->time_base);
 
+        //avcc格式h624码流 ([extradata]) | ([length] NALU) | ([length] NALU) | ...
         if(pkt.data[0] == 0x00 && pkt.data[1] == 0x00 &&
            pkt.data[2] == 0x00 && pkt.data[3] == 0x01){
             size -= 4;

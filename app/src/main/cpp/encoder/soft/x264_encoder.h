@@ -11,7 +11,7 @@
 #include "../../utils/log.h"
 #include "x264_parser.h"
 #include "../../video_packet_pool.h"
-
+#include "h264_util.h"
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"
@@ -45,6 +45,8 @@ private:
     bool mAlreadyWriteSPS =false;
 
     VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts,int64_t duration);
+
+     void parseAndEnqueue();
 };
 
 

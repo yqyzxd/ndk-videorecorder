@@ -32,6 +32,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
 
     int naluType = data[4] & (0x1f);
     NALU *nalu = new NALU(naluType,data+4);
+    nalu->startCodeLen=4;
     while (startIndex>0){
 
         if (nalu!= nullptr){

@@ -39,9 +39,9 @@ class VideoRecordViewModel(
             mVideoRecorder.startRecord(
                 outputUri = h264File,
                 videoFrameRate = 24,
-                videoBitrate = 1280*720*4,
-                videoWidth = 1280,
-                videoHeight = 720,
+                videoBitrate = 1280*720*2,
+                videoWidth =720,
+                videoHeight =  1280,
                 audioBitrate = 64*1000,
                 audioChannels = 1, //录制的时候使用单声道，后期使用ffmpeg转化成双声道
                 audioSampleRate = 44100,

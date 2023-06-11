@@ -76,7 +76,7 @@ void GLSurface::surfaceChanged(int width, int height) {
 
 void GLSurface::surfaceDestroyed() {
     pthread_mutex_lock(&mLock);
-    LOGE("GLSurface::surfaceDestroyed");
+    //LOGE("GLSurface::surfaceDestroyed");
     mSurfaceEvent=SURFACE_EVENT_DESTROYED;
     pthread_cond_signal(&mCond);
     pthread_mutex_unlock(&mLock);
@@ -99,7 +99,7 @@ void GLSurface::requestRender() {
 }
 
 void GLSurface::dealloc() {
-    LOGE("dealloc:%d",mRenderPrepared);
+    //LOGE("dealloc:%d",mRenderPrepared);
 
     while (mRenderPrepared){
         surfaceDestroyed();
@@ -112,7 +112,7 @@ void GLSurface::dealloc() {
     mKillRendererThread= true;
     pthread_cond_signal(&mCond);
     pthread_mutex_unlock(&mLock);
-    LOGI("wait GL THREAD");
+    //LOGI("wait GL THREAD");
     //等待线程结束
     pthread_join(_rendererThreadId, 0);
     mRenderThreadStarted= false;
