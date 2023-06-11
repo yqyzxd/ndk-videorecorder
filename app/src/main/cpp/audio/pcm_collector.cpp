@@ -76,7 +76,7 @@ void PcmCollector::enqueue() {
         packet->size=mBufferCursor;
         packet->position=currentTimeMills()-mStartTimeMillis;
         mPool->enqueueAudioFrame(packet);
-        LOGI("enqueueAudioFrame");
+        //LOGI("enqueueAudioFrame");
         //todo 检测时间戳，是否需要插入空数据
     }
 

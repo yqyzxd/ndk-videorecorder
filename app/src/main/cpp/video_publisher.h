@@ -77,6 +77,7 @@ protected:
     int64_t mCurAudioPacketPts=0;
     int64_t mCurVideoPacketPts=0;
 
+    int64_t duration=0;
 
     AVOutputFormat* mAVOutputFormat;
     AVFormatContext* mAVFormatContext;

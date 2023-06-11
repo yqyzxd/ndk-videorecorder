@@ -43,11 +43,11 @@ void SoftVideoEncoderAdapter::runEncode() {
             VideoFrame *videoFrame = nullptr;
             //LOGE("before mVideoFrameQueue take");
             int ret = mVideoFrameQueue->take(&videoFrame);
-            LOGE("after mVideoFrameQueue take");
+            //LOGE("after mVideoFrameQueue take");
             if (ret == 0 && videoFrame!= nullptr) {
                 mEncoder->encode(videoFrame);
             }
-            LOGE("after mEncoder->encode");
+            //LOGE("after mEncoder->encode");
             if (videoFrame != nullptr) {
                 delete videoFrame;
                 videoFrame = nullptr;

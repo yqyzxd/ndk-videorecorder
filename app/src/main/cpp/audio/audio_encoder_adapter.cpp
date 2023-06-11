@@ -85,9 +85,9 @@ void AudioEncoderAdapter::run() {
     mAudioEncoder->setAudioFrameProvider(provideAudioFrameCallback, this);
     mAudioEncoder->setAudioPacketCollector(audioPacketCollector,this);
     while (mRunning) {
-        LOGI("before audio encoder adapter run");
+        //LOGI("before audio encoder adapter run");
         mAudioEncoder->encode();
-        LOGI("after audio encoder adapter run");
+        //LOGI("after audio encoder adapter run");
     }
     mAudioEncoder->destroy();
 }
@@ -160,6 +160,6 @@ void AudioEncoderAdapter::discardAudioPacket() {
 int AudioEncoderAdapter::collectAudioPacket(AudioPacket *packet) {
 
     int ret=  mAudioPool->enqueueAudioPacket(packet);
-    LOGI("audio packet size:%d",mAudioPool->getVideoPacketQueueSize());
+    //LOGI("audio packet size:%d",mAudioPool->getVideoPacketQueueSize());
     return ret;
 }

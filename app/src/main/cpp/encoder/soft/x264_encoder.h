@@ -39,11 +39,12 @@ private:
     const char* mBitrateMode;
     VideoPacketPool* mVideoPacketPool=0;
 
+    int64_t mNextPts=0;
    bool mPrinted;
     X264Parser* mX264Parser;
     bool mAlreadyWriteSPS =false;
 
-    VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts);
+    VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts,int64_t duration);
 };
 
 

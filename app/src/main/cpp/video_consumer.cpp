@@ -39,9 +39,9 @@ int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitr
 }
 void VideoConsumer::run() {
     while (!mStop){
-        LOGI("before publisher encode");
+        //LOGI("before publisher encode");
         int ret=mPublisher->encode();
-        LOGI("after publisher encode");
+        //LOGI("after publisher encode");
         if (ret<0){
             //error
             break;

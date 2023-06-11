@@ -10,6 +10,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.wind.ndk.audio.recorder.AudioRecorder
 import com.wind.ndk.camera.CameraPreviewScheduler
 import com.wind.ndk.camera.VideoRecorder
+import java.io.File
 
 /**
  * FileName: VideoRecordViewModel
@@ -31,6 +32,10 @@ class VideoRecordViewModel(
         if (!mRecording){
             mRecording=true
             val h264File="${mApp.getExternalFilesDir(null)?.absolutePath}/record.flv"
+            val file= File(h264File)
+            if (file.exists()){
+                file.delete()
+            }
             mVideoRecorder.startRecord(
                 outputUri = h264File,
                 videoFrameRate = 24,

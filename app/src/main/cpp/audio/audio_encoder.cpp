@@ -47,10 +47,10 @@ void AudioEncoder::setAudioFrameProvider(AudioFrameProvider provider, void *ctx)
     this->mAudioFrameProviderCtx=ctx;
 }
 int AudioEncoder::encode() {
-    LOGI("enter audio encoder encode");
+    //LOGI("enter audio encoder encode");
     double pts=0;
     int actualSampleSizeInShort=mAudioFrameProvider(reinterpret_cast<short *>(inputFrame->data[0]), nbSamples, mChannels, &pts, mAudioFrameProviderCtx);
-    LOGI("enter audio encoder actualSampleSizeInShort");
+    //LOGI("enter audio encoder actualSampleSizeInShort");
     if(actualSampleSizeInShort<=0){
         LOGI("provide audio frame error");
         return -1;
@@ -116,7 +116,6 @@ int AudioEncoder::encodePacket() {
     mAudioNextPts+=encodeFrame->nb_samples;
 
 
-
     //LOGI("avcodec_send_frame");
     int ret=avcodec_send_frame(avCodecContext,encodeFrame);
     if (ret<0){
@@ -126,7 +125,7 @@ int AudioEncoder::encodePacket() {
     while (ret>=0){
         ret=avcodec_receive_packet(avCodecContext,&pkt);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF){
-            LOGI("avcodec_receive_packet eagain || eof %d",ret);
+            //LOGI("avcodec_receive_packet eagain || eof %d",ret);
             return 1;
         }else if (ret<0){
             LOGE("avcodec_receive_packet error return %d",ret);
@@ -134,16 +133,20 @@ int AudioEncoder::encodePacket() {
         }
         //writeAACPacketToFile(pkt.data,pkt.size);
         if (encodeFrame&& encodeFrame->pts!=AV_NOPTS_VALUE){
-            //todo pts为什么是这么设置？ a * bq / cq
-            LOGI("avaudio:av_rescale_q");
+
+           // LOGI("avaudio:av_rescale_q");
             pkt.pts= av_rescale_q(encodeFrame->pts,avCodecContext->time_base,timeBase);
         }
 
-        LOGI("avaudio:%ld",pkt.pts);
+        LOGI("avaudio:%ld,duration:%ld",pkt.pts,pkt.duration);
         AudioPacket* outPacket=new AudioPacket();
         outPacket->data=new byte[pkt.size];
         memcpy(outPacket->data,pkt.data,pkt.size);
         outPacket->size=pkt.size;
+        outPacket->duration=pkt.duration;
+        outPacket->pts=pkt.pts;
+        outPacket->dts=pkt.pts;
+        //从开始到现在经过的毫秒数输出了多少个frame
         outPacket->position=(pkt.pts * av_q2d(timeBase) * 1000.0f);
 
         mAudioPacketCollector(outPacket,mAudioPacketCollectorCtx);

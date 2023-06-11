@@ -130,11 +130,11 @@ int X264Encoder::encode(VideoFrame *frame) {
                            mAVFrame->data[2], mAVFrame->linesize[2],
                            mAVCodecContext->width, mAVCodecContext->height);
 
-        int64_t presentationTimeInMills = frame->timeInMills;
+        //int64_t presentationTimeInMills = frame->timeInMills;
 
-        int64_t pts = presentationTimeInMills;
-        mAVFrame->pts = pts;
-        LOGI("mAVFrame pts:%d", pts);
+        //int64_t pts = presentationTimeInMills;
+        mAVFrame->pts = mNextPts++;
+        //LOGI("mAVFrame pts:%d", pts);
     }
     int ret = avcodec_send_frame(mAVCodecContext, mAVFrame);
     while (ret >= 0) {
@@ -144,7 +144,7 @@ int X264Encoder::encode(VideoFrame *frame) {
 
             // LOGE("Write packet %3ld (size=%5d)\n", mAvPacket->pts, mAvPacket->size);
             //fwrite(mAvPacket->data,1,mAvPacket->size,h264File);//生成h264文件
-            LOGI("pkt : {%ld, %ld}", mAvPacket->pts, mAvPacket->dts);
+            //LOGI("pkt : {%ld, %ld}", mAvPacket->pts, mAvPacket->dts);
             VideoPacket *videoPacket = new VideoPacket();
             videoPacket->buffer = mAvPacket->data;
             videoPacket->size = mAvPacket->size;
@@ -198,7 +198,7 @@ int X264Encoder::encode(VideoFrame *frame) {
 
                         // insert to queue
                         mVideoPacketPool->enqueueVideoPacket(
-                                buildVideoPacket(buffer, bufferSize, mAvPacket->pts,mAvPacket->pts,mAvPacket->dts));
+                                buildVideoPacket(buffer, bufferSize, mAvPacket->pts,mAvPacket->pts,mAvPacket->dts,mAvPacket->duration));
 
                     }
                 }
@@ -246,7 +246,7 @@ int X264Encoder::encode(VideoFrame *frame) {
                     //delete nalu;
                 }
 
-                mVideoPacketPool->enqueueVideoPacket(buildVideoPacket(frameBuffer,frameBufferSize,mAvPacket->pts,mAvPacket->pts,mAvPacket->dts));
+                mVideoPacketPool->enqueueVideoPacket(buildVideoPacket(frameBuffer,frameBufferSize,mAvPacket->pts,mAvPacket->pts,mAvPacket->dts,mAvPacket->duration));
 
             }
 
@@ -275,15 +275,15 @@ int X264Encoder::dealloc() {
     return 0;
 }
 
-VideoPacket *X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts,int64_t dts) {
+VideoPacket *X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts,int64_t dts,int64_t duration) {
     VideoPacket *pkt = new VideoPacket();
     pkt->timeMills = timeMillis;
     pkt->buffer = buffer;
     pkt->size = size;
     pkt->pts=pts;
     pkt->dts=dts;
-
-    LOGI("x264 AVPacket timeMillis:%d,pts:%d,dts:%d",timeMillis,pts,dts);
+    pkt->duration=duration;
+    //LOGI("x264 AVPacket timeMillis:%d,pts:%d,dts:%d,duration:%d",timeMillis,pts,dts,duration);
     return pkt;
 }
 

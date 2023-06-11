@@ -41,6 +41,7 @@ public:
         timeMills=0;
         pts=PTS_NONE_FLAG;
         dts=DTS_NONE_FLAG;
+        duration=0;
     };
     ~VideoPacket(){
         if (buffer){
@@ -60,7 +61,7 @@ public:
     byte* buffer;
     int size;
     int64_t timeMills;
-    int duration;
+    int64_t duration;
     int64_t pts;
     int64_t dts;
 };

@@ -222,9 +222,9 @@ AVFrame *VideoPublisher::allocPicture(AVPixelFormat pix_fmt, int width, int heig
 }
 
 bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
-
+    LOGI("enter writeVideoFrame");
     VideoPacket *packet;
-    LOGI("before mVideoProvider");
+
     int ret = mVideoProvider(&packet, mVideoProviderCtx);
     LOGI("after mVideoProvider: %d",ret);
     if (ret < 0) {
@@ -326,7 +326,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         pkt.pts = packet->pts;
         pkt.dts = packet->dts;
         pkt.flags = flag;
-        //pkt.duration=packet->duration;
+        pkt.duration=packet->duration;
         /* rescale output packet timestamp values from codec to stream timebase */
         av_packet_rescale_ts(&pkt, ost.codecCtx->time_base, ost.st->time_base);
 
@@ -342,9 +342,10 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         c->frame_number++;
     }
 
-    mCurVideoPacketPts = packet->timeMills;
-    LOGE("packet->timeMills:%ld",mCurVideoPacketPts);
-    logPacket(oc, &pkt);
+   // mCurVideoPacketPts = packet->timeMills;
+    mCurVideoPacketPts = packet->pts;
+    //LOGE("packet->timeMills:%ld",mCurVideoPacketPts);
+    //logPacket(oc, &pkt);
 
     ret = av_interleaved_write_frame(oc, &pkt);
     LOGE("video av_interleaved_write_frame:%d",ret);
@@ -367,50 +368,40 @@ void VideoPublisher::logPacket(AVFormatContext *os, AVPacket *pkt) {
 }
 
 int VideoPublisher::encode() {
-    int64_t curVideoTime = getVideoStreamTimeInSecs();
-    int64_t curAudioTime = getAudioStreamTimeInSecs();
+
+
+
+    //ts_a / ts_b：时间戳
+    //tb_a / tb_b：时间基
+   // 返回值：-1表示ts_a在ts_b之前；0表示相等；1表示ts_a在ts_b之后。
+    double v=mCurVideoPacketPts*av_q2d(mVideoStream.codecCtx->time_base);
+    double a=mCurAudioPacketPts*av_q2d(mAudioStream.codecCtx->time_base);
+    LOGI("encode v:%f,a:%f",v,a);
     int ret;
+    //ts_a /tb_a   ts_b/tb_b
+    if (av_compare_ts(mCurVideoPacketPts,mVideoStream.codecCtx->time_base,
+                      mCurAudioPacketPts,mAudioStream.codecCtx->time_base)<=0){
+        ret = writeVideoFrame(mAVFormatContext, mVideoStream);
+    } else{
+        ret = writeAudioFrame(mAVFormatContext, mAudioStream);
+    }
+    if (v<a){
+        duration=a;
+    }else{
+        duration=v;
+    }
+
+    /*int64_t curVideoTime = getVideoStreamTimeInSecs();
+    int64_t curAudioTime = getAudioStreamTimeInSecs();
     LOGI("curVideoTime:%ld,curAudioTime:%ld",curVideoTime,curAudioTime);
     if (curAudioTime < curVideoTime) {
         ret = writeAudioFrame(mAVFormatContext, mAudioStream);
     } else {
         ret = writeVideoFrame(mAVFormatContext, mVideoStream);
-    }
+    }*/
     return ret;
 }
 
-int VideoPublisher::stop() {
-    if (mHeaderHasWrite) {
-        /* Write the trailer, if any. The trailer must be written before you
-    * close the CodecContexts open when you wrote the header; otherwise
-    * av_write_trailer() may try to use memory that was freed on
-    * av_codec_close(). */
-
-        av_write_trailer(mAVFormatContext);
-
-        LOGI("av_write_trailer and duration:%d", mAVFormatContext->duration);
-        LOGI("av_write_trailer and stream duration:%d", mVideoStream.st->duration);
-
-    }
-    closeStream();
-
-    if (!(mAVFormatContext->oformat->flags & AVFMT_NOFILE)) {
-        /* Close the output file. */
-        avio_closep(&mAVFormatContext->pb);
-    }
-    avformat_free_context(mAVFormatContext);
-    return 0;
-}
-
-void VideoPublisher::closeStream() {
-    avcodec_free_context(&mVideoStream.codecCtx);
-    avcodec_free_context(&mAudioStream.codecCtx);
-    //av_frame_free(&mVideoStream.avFrame);
-    //av_frame_free(&mVideoStream.tmpFrame);
-    //sws_freeContext(mVideoStream.swsCtx);
-    //swr_free(&mVideoStream.swrCtx);
-
-}
 
 int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost,
                               AVDictionary *dict) {
@@ -495,7 +486,6 @@ int64_t VideoPublisher::getVideoStreamTimeInSecs() {
 }
 
 int64_t VideoPublisher::getAudioStreamTimeInSecs() {
-   // LOGI("mCurAudioPacketPts:%ld",mCurAudioPacketPts);
     //return mCurAudioPacketPts / 1000.0f;
     return mCurAudioPacketPts;
 }
@@ -507,15 +497,16 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
     if (ret < 0) {
         return ret;
     }
-    LOGI("get AudioPacket from mAudioProvider");
+   // LOGI("get AudioPacket from mAudioProvider");
     AVPacket pkt = {0};
-    mCurAudioPacketPts = packet->position;
+    //mCurAudioPacketPts = packet->position;
+    mCurAudioPacketPts = packet->pts;
     LOGI("mCurAudioPacketPts:%d",mCurAudioPacketPts);
     pkt.data = packet->data;
     pkt.size = packet->size;
-    pkt.dts = mCurAudioPacketPts;
-    pkt.pts = mCurAudioPacketPts;
-    pkt.duration = 1024;
+    pkt.dts = packet->dts;
+    pkt.pts = packet->pts;
+    pkt.duration = packet->duration;
     pkt.stream_index = ost.st->index;
 
     AVPacket dstPkt = {0};
@@ -527,7 +518,9 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
         dstPkt.duration = pkt.duration;
         dstPkt.stream_index = pkt.stream_index;
 
-        ret = av_interleaved_write_frame(oc, &pkt);
+        logPacket(oc, &dstPkt);
+        ret = av_interleaved_write_frame(oc, &dstPkt);
+
         LOGE("audio av_interleaved_write_frame:%d",ret);
         if (ret < 0) {
             LOGE("audio av_interleaved_write_frame error");
@@ -538,3 +531,38 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
     return 0;
 }
 
+
+int VideoPublisher::stop() {
+    if (mHeaderHasWrite) {
+        /* Write the trailer, if any. The trailer must be written before you
+    * close the CodecContexts open when you wrote the header; otherwise
+    * av_write_trailer() may try to use memory that was freed on
+    * av_codec_close(). */
+        //设置视频长度
+        mAVFormatContext->duration = duration * AV_TIME_BASE;
+        LOGI("av_write_trailer and duration:%d", mAVFormatContext->duration);
+
+        int ret=av_write_trailer(mAVFormatContext);
+        LOGI("av_write_trailer ret:%d",ret);
+
+
+    }
+    closeStream();
+
+    if (!(mAVFormatContext->oformat->flags & AVFMT_NOFILE)) {
+        /* Close the output file. */
+        avio_closep(&mAVFormatContext->pb);
+    }
+    avformat_free_context(mAVFormatContext);
+    return 0;
+}
+
+void VideoPublisher::closeStream() {
+    avcodec_free_context(&mVideoStream.codecCtx);
+    avcodec_free_context(&mAudioStream.codecCtx);
+    //av_frame_free(&mVideoStream.avFrame);
+    //av_frame_free(&mVideoStream.tmpFrame);
+    //sws_freeContext(mVideoStream.swsCtx);
+    //swr_free(&mVideoStream.swrCtx);
+
+}

@@ -10,7 +10,9 @@ typedef struct AudioPacket {
     short* buffer= nullptr;
     int size=0;
     int64_t position=0;
-
+    int64_t duration=0;
+    int64_t pts=0;
+    int64_t dts=0;
     ~AudioPacket() {
         if (data != nullptr) {
             delete[] data;
