@@ -28,10 +28,10 @@ public:
 
 
 
-    int enqueueAudioFrame(AudioPacket* packet);
+    int enqueueAudioFrame(AudioFrame* packet);
     int getAudioFrameQueueSize();
     int abortAudioFrameQueue();
-    int getAudioFrame(AudioPacket** packet);
+    int getAudioFrame(AudioFrame** packet);
 
 
     int enqueueAudioPacket(AudioPacket* packet);
@@ -49,7 +49,7 @@ private:
     BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
     VideoPacket* mCurVideoPacket=0;
 
-    BlockingQueue<AudioPacket*> *mAudioFrameQueue = 0;
+    BlockingQueue<AudioFrame*> *mAudioFrameQueue = 0;
 
     BlockingQueue<AudioPacket*> *mAudioPktQueue = 0;
 

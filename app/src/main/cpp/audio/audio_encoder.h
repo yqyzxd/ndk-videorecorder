@@ -21,7 +21,7 @@ extern "C"{
 
 #define BITE_RATE 64000
 
-typedef int (*AudioFrameProvider)(short* samples,int nbSamples,int channels,double * pts,void* ctx);
+typedef int (*AudioFrameProvider)(short* samples,int nbSamples,int channels,int64_t * pts,void* ctx);
 typedef int (*AudioPacketCollector)(AudioPacket *, void *);
 class AudioEncoder {
 private:
@@ -46,8 +46,10 @@ private:
 
     uint8_t** convertData;
 
-    //通道数
-    int mChannels;
+    //录制时使用的通道数
+    int mRecordChannels;
+    //输出通道数
+    int mTargetChannels=2;
     //采样率
     int mSampleRate;
     //码率

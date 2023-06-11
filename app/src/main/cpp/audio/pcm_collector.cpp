@@ -37,8 +37,8 @@ void PcmCollector::collect(short *data, int sizeInShort) {
         mAudioEncoderAdapter=new AudioEncoderAdapter();
         //int audioBitrate,int audioSampleRate, int audioChannels
         int audioBitrate=0;
-        int audioChannels=2;
-        mAudioEncoderAdapter->init(audioBitrate,mAudioSampleRate,audioChannels);
+        int recordAudioChannels=1;
+        mAudioEncoderAdapter->init(audioBitrate,mAudioSampleRate,recordAudioChannels);
         LOGI("after audio encoder adapter init");
     }
     //LOGI("pcm collector collect");
@@ -67,7 +67,7 @@ void PcmCollector::collect(short *data, int sizeInShort) {
 
 void PcmCollector::enqueue() {
     if (mBufferCursor>0){
-        AudioPacket* packet=new AudioPacket ;
+        AudioFrame* packet=new AudioFrame ;
 
         short* packetBuffer=new short[mBufferCursor];
         memcpy(packetBuffer,mAudioBuffer,mBufferCursor*sizeof(short));
@@ -93,5 +93,9 @@ void PcmCollector::stop() {
     }
 
     mStartTimeMillis=0;
-    delete[] mAudioBuffer;
+    if (mAudioBuffer!= nullptr){
+        delete[] mAudioBuffer;
+        mAudioBuffer= nullptr;
+    }
+
 }

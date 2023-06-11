@@ -7,7 +7,7 @@
 
 
 #define LOG_TAG "AudioEncoder"
-int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSample,
+int AudioEncoder::init(int bitRate, int recordChannels, int sampleRate, int bitsPerSample,
                         const char *codecName) {
     mAudioNextPts=0;
     swrBuffer= nullptr;
@@ -20,7 +20,8 @@ int AudioEncoder::init(int bitRate, int channels, int sampleRate, int bitsPerSam
 
 
     this->mBitRate=bitRate;
-    this->mChannels=channels;
+    this->mRecordChannels=recordChannels;
+    this->mTargetChannels=2;
     this->mSampleRate=sampleRate;
 
 
@@ -48,8 +49,8 @@ void AudioEncoder::setAudioFrameProvider(AudioFrameProvider provider, void *ctx)
 }
 int AudioEncoder::encode() {
     //LOGI("enter audio encoder encode");
-    double pts=0;
-    int actualSampleSizeInShort=mAudioFrameProvider(reinterpret_cast<short *>(inputFrame->data[0]), nbSamples, mChannels, &pts, mAudioFrameProviderCtx);
+    int64_t pts=0;
+    int actualSampleSizeInShort=mAudioFrameProvider((short *)(inputFrame->data[0]), nbSamples, mTargetChannels, &pts, mAudioFrameProviderCtx);
     //LOGI("enter audio encoder actualSampleSizeInShort");
     if(actualSampleSizeInShort<=0){
         LOGI("provide audio frame error");
@@ -102,6 +103,7 @@ int AudioEncoder::encodePacket() {
         int length=avCodecContext->frame_size * av_get_bytes_per_sample(avCodecContext->sample_fmt);
         for (int i = 0; i < 2; ++i) {
             for (int j = 0; j < length; ++j) {
+                //crash
                 swrFrame->data[i][j]=convertData[i][j];
             }
         }
@@ -187,8 +189,8 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
     avCodecContext->bit_rate=mBitRate;
     //设置sampleFmt
     avCodecContext->sample_fmt=AV_SAMPLE_FMT_S16;
-    //设置通道信息
-    avCodecContext->channel_layout=mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
+    //设置通道信息 输出为双声道
+    avCodecContext->channel_layout=AV_CH_LAYOUT_STEREO;//mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
     avCodecContext->channels= av_get_channel_layout_nb_channels(avCodecContext->channel_layout);
     // encoding: Set by user.
     // decoding: Set by libavcodec.
@@ -200,7 +202,7 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
 
 
 
-    if (mChannels !=avCodecContext->channels
+    if (mRecordChannels !=avCodecContext->channels
         || mSampleRate!=avCodecContext->sample_rate
         || AV_SAMPLE_FMT_S16!=avCodecContext->sample_fmt){
 
@@ -208,7 +210,7 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
         swrContext=swr_alloc_set_opts(nullptr,
                                                   av_get_default_channel_layout(avCodecContext->channels),
                                                   avCodecContext->sample_fmt,avCodecContext->sample_rate,
-                                                  av_get_default_channel_layout(mChannels),
+                                                  av_get_default_channel_layout(mRecordChannels),
                                                   AV_SAMPLE_FMT_S16,
                                                   mSampleRate,
                                                   0, nullptr
@@ -256,7 +258,7 @@ int AudioEncoder::allocAvFrame() {
      * enum AVSampleFormat for audio)
      */
     inputFrame->format=AV_SAMPLE_FMT_S16;
-    inputFrame->channel_layout= mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
+    inputFrame->channel_layout=AV_CH_LAYOUT_STEREO;// mChannels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
     inputFrame->sample_rate=mSampleRate;
     /**
      * Get the required buffer size for the given audio parameters.
@@ -306,7 +308,7 @@ int AudioEncoder::allocAvFrame() {
             return -1;
         }
         swrFrame->nb_samples=avCodecContext->frame_size;
-        swrFrame->format=avCodecContext->sample_rate;
+        swrFrame->format=avCodecContext->sample_fmt;
         swrFrame->channel_layout=avCodecContext->channels==1?AV_CH_LAYOUT_MONO:AV_CH_LAYOUT_STEREO;
         swrFrame->sample_rate=avCodecContext->sample_rate;
         ret=avcodec_fill_audio_frame(swrFrame,avCodecContext->channels,avCodecContext->sample_fmt,swrBuffer,swrBufferSize,0);

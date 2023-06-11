@@ -7,7 +7,7 @@
 
 VideoPacketPool::VideoPacketPool() {
     mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
-    mAudioFrameQueue = new LinkedBlockingQueue<AudioPacket *>();
+    mAudioFrameQueue = new LinkedBlockingQueue<AudioFrame *>();
     mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
     mTotalDiscardVideoPacketDuration=0;
     pthread_rwlock_init(&mRWLock, nullptr);
@@ -108,7 +108,7 @@ int VideoPacketPool::abortVideoPacketQueue() {
     return 0;
 }
 
-int VideoPacketPool::enqueueAudioFrame(AudioPacket *packet) {
+int VideoPacketPool::enqueueAudioFrame(AudioFrame *packet) {
     return mAudioFrameQueue->put(packet);
 }
 
@@ -130,7 +130,7 @@ void VideoPacketPool::recordDropVideoFrame(int discardDuration) {
 
 bool VideoPacketPool::discardAudioFrame() {
     int ret=0;
-    AudioPacket *packet;
+    AudioFrame *packet;
     ret= mAudioFrameQueue->take(&packet);
     if (ret<0){
         return false;
@@ -144,7 +144,7 @@ bool VideoPacketPool::discardAudioFrame() {
     return true;
 }
 
-int VideoPacketPool::getAudioFrame(AudioPacket **packet) {
+int VideoPacketPool::getAudioFrame(AudioFrame **packet) {
     return mAudioFrameQueue->take(packet);
 }
 int VideoPacketPool::abortAudioFrameQueue() {

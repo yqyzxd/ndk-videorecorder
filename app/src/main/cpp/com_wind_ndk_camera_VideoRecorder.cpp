@@ -45,9 +45,9 @@ JNIEXPORT jint JNICALL Java_com_wind_ndk_camera_VideoRecorder_nativeStartConsume
   (JNIEnv *env, jobject jobj, jstring joutputUri,jint videoFrameRate,jint videoBitrate, jint videoWidth, jint videoHeight, jint audioBitrate, jint audioSampleRate, jint audioChannels){
 
    const char* outputUri= env->GetStringUTFChars(joutputUri,0);
-   JavaVM* jVM= nullptr;
-   env->GetJavaVM(&jVM);
-   jobject gObj= env->NewGlobalRef(jobj);
+  // JavaVM* jVM= nullptr;
+  // env->GetJavaVM(&jVM);
+   //jobject gObj= env->NewGlobalRef(jobj);
 
 
    videoConsumer=new VideoConsumer();

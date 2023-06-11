@@ -7,10 +7,7 @@
 #define LOG_TAG "AudioEncoderAdapter"
 AudioEncoderAdapter::AudioEncoderAdapter() {
 
-    mPacketBufferCursor=0;
-    mPacketBufferSize=0;
-    mPacketBufferPresentationTimeMillis=0;
-    mPacketBuffer= nullptr;
+
 }
 
 AudioEncoderAdapter::~AudioEncoderAdapter() noexcept {
@@ -18,7 +15,7 @@ AudioEncoderAdapter::~AudioEncoderAdapter() noexcept {
 }
 
 int AudioEncoderAdapter::provideAudioFrameCallback(short *samples, int frameSize, int nbChannels,
-                                               double *pts,
+                                                   int64_t *pts,
                                                void *ctx) {
     AudioEncoderAdapter *adapter = static_cast<AudioEncoderAdapter *>(ctx);
     return adapter->provideAudioFrame(samples, frameSize, nbChannels, pts);
@@ -38,6 +35,10 @@ int AudioEncoderAdapter::init(int audioBitrate, int audioSampleRate, int audioCh
     /** iOS是1.0f Android是2.0f **/
     mChannelRatio = 2.0f;
 
+    mPacketBufferCursor=0;
+    mPacketBufferSize=0;
+    mPacketBufferPresentationTimeMillis=0;
+    mPacketBuffer= nullptr;
 
     mRunning= true;
     mAudioPool = VideoPacketPool::getInstance();
@@ -47,7 +48,7 @@ int AudioEncoderAdapter::init(int audioBitrate, int audioSampleRate, int audioCh
 }
 
 int
-AudioEncoderAdapter::provideAudioFrame(short *samples, int frameSize, int nbChannels, double *pts) {
+AudioEncoderAdapter::provideAudioFrame(short *samples, int frameSize, int nbChannels, int64_t *pts) {
     int sizeInByte = frameSize * nbChannels * 2;
 
     int sampleCursorInShort = 0;
@@ -108,7 +109,7 @@ void AudioEncoderAdapter::dealloc() {
 int AudioEncoderAdapter::getAudioPacket() {
     LOGI("before discardAudioPacket");
     discardAudioPacket();
-    AudioPacket* pkt;
+    AudioFrame* pkt;
     LOGI("before get audio packet");
     int ret = mAudioPool->getAudioFrame(&pkt);
     LOGI("after get audio packet:ret %d",ret);
@@ -135,7 +136,7 @@ int AudioEncoderAdapter::getAudioPacket() {
 }
 
 int AudioEncoderAdapter::cpyToSamples(short *samples, int samplesCursorInShort, int cpySizeInShort,
-                                      double *pts) {
+                                      int64_t *pts) {
     if (samplesCursorInShort == 0) {
 
         double duration =

@@ -28,7 +28,7 @@ public:
 
     void dealloc();
 
-    static int provideAudioFrameCallback(short* samples,int frameSize,int nbChannels,double* pts,void* ctx);
+    static int provideAudioFrameCallback(short* samples,int frameSize,int nbChannels,int64_t* pts,void* ctx);
     static int audioPacketCollector(AudioPacket* packet,void* ctx);
 private:
     int mPacketBufferSize;
@@ -48,12 +48,12 @@ private:
 
     VideoPacketPool* mAudioPool;
 private:
-    int provideAudioFrame(short* samples,int frameSize,int nbChannels,double* pts);
+    int provideAudioFrame(short* samples,int frameSize,int nbChannels,int64_t* pts);
     int collectAudioPacket(AudioPacket* packet);
 
     int getAudioPacket();
 
-    int cpyToSamples(short *samples, int samplesCursorInShort, int cpySizeInShort, double *pts);
+    int cpyToSamples(short *samples, int samplesCursorInShort, int cpySizeInShort, int64_t *pts);
 
     void discardAudioPacket();
 };

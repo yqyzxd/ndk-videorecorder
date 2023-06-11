@@ -28,7 +28,7 @@ JNIEXPORT jlong JNICALL Java_com_wind_ndk_audio_recorder_PcmCollector_nativeInit
 JNIEXPORT void JNICALL Java_com_wind_ndk_audio_recorder_PcmCollector_nativeConsume
   (JNIEnv * env, jobject jobj, jlong ptr, jshortArray array, jint size){
     PcmCollector* collector= reinterpret_cast<PcmCollector *>(ptr);
-    jshort * data=env->GetShortArrayElements(array,0);
+    jshort* data=env->GetShortArrayElements(array,0);
     collector->collect(data,size);
     env->ReleaseShortArrayElements(array,data,0);
 }

@@ -152,7 +152,7 @@ int VideoPublisher::addStream(OutputStream *ost, AVFormatContext *oc, AVCodec **
 
             break;
         case AVMEDIA_TYPE_AUDIO:
-            c->codec_id = codecID;
+            //c->codec_id = codecID;
             c->codec_type = AVMEDIA_TYPE_AUDIO;
             c->sample_fmt = AV_SAMPLE_FMT_S16;
             c->bit_rate = mAudioBitrate;

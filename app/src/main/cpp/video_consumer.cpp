@@ -21,9 +21,7 @@ int VideoConsumer::getAudioPacketCallback(AudioPacket **pkt, void *ctx) {
     return consumer->getAudioPacket(pkt);
 }
 
-int VideoConsumer::getAudioPacket(AudioPacket **packet) {
-   return mVideoPacketPool->getAudioPacket(packet);
-}
+
 
 int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitrate, int videoWidth,
                         int videoHeight, int audioBitrate, int audioSampleRate, int audioChannels) {
@@ -43,7 +41,7 @@ void VideoConsumer::run() {
         int ret=mPublisher->encode();
         //LOGI("after publisher encode");
         if (ret<0){
-            //error
+            LOGE("publisher encode error");
             break;
         }
     }
@@ -67,4 +65,7 @@ void VideoConsumer::stop() {
 }
 int VideoConsumer::getVideoPacket(VideoPacket **packet) {
    return mVideoPacketPool->getVideoPacket(packet);
+}
+int VideoConsumer::getAudioPacket(AudioPacket **packet) {
+    return mVideoPacketPool->getAudioPacket(packet);
 }
