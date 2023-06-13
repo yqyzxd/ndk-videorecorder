@@ -12,10 +12,10 @@ int AudioEncoder::init(int bitRate, int recordChannels, int sampleRate, int bits
     mAudioNextPts=0;
     swrBuffer= nullptr;
     swrContext= nullptr;
-    convertData= nullptr;
+
     swrFrame= nullptr;
     inputFrame= nullptr;
-    samples= nullptr;
+
     avCodecContext= nullptr;
 
 
@@ -96,18 +96,18 @@ int AudioEncoder::encodePacket() {
     AVFrame* encodeFrame;
     if(swrContext){
         LOGI("exist swrContext");
-        long long beginSWRTimestamp=currentTimeMills();
         const uint8_t** in=   (const uint8_t**)inputFrame->data;
-        swr_convert(swrContext, convertData, avCodecContext->frame_size,
+        int ret=swr_convert(swrContext, &swrBuffer, avCodecContext->frame_size,
                     in , avCodecContext->frame_size);
-        int length=avCodecContext->frame_size * av_get_bytes_per_sample(avCodecContext->sample_fmt);
-        for (int i = 0; i < 2; ++i) {
-            for (int j = 0; j < length; ++j) {
-                //crash
-                swrFrame->data[i][j]=convertData[i][j];
-            }
+        if (ret<0){
+            LOGE("swr_convert error return %d",ret);
+            return -1;
         }
-        totalSWRTimeMills+=(currentTimeMills()-beginSWRTimestamp);
+        int length=avCodecContext->frame_size * av_get_bytes_per_sample(avCodecContext->sample_fmt);
+        for (int j = 0; j < length; ++j) {
+            //crash
+            swrFrame->data[0][j]=(&swrBuffer)[0][j];
+        }
         encodeFrame=swrFrame;
     }else{
         encodeFrame=inputFrame;
@@ -179,7 +179,7 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
         return -1;
     }
 
-    avCodecContext->codec_id=codec->id;
+   // avCodecContext->codec_id=codec->id;
     avCodecContext->codec_type= AVMEDIA_TYPE_AUDIO;
     avCodecContext->sample_rate=mSampleRate;
 
@@ -263,10 +263,10 @@ int AudioEncoder::allocAvFrame() {
     /**
      * Get the required buffer size for the given audio parameters.
      */
-    bufferSize=av_samples_get_buffer_size(nullptr, av_get_channel_layout_nb_channels(inputFrame->channel_layout), inputFrame->nb_samples,
+    int bufferSize=av_samples_get_buffer_size(nullptr, av_get_channel_layout_nb_channels(inputFrame->channel_layout), inputFrame->nb_samples,
                                AV_SAMPLE_FMT_S16, 0);
 
-    samples= static_cast<uint8_t *>(av_malloc(bufferSize));
+    uint8_t* samples= static_cast<uint8_t *>(av_malloc(bufferSize));
 
     if(!samples){
         LOGI("can't allocate bytes for samples");
@@ -288,17 +288,7 @@ int AudioEncoder::allocAvFrame() {
          */
         //av_sample_fmt_is_planar()
 
-        convertData= static_cast<uint8_t **>(calloc(avCodecContext->channels, sizeof(*convertData)));
-        /**
-         * Allocate a samples buffer for nb_samples samples, and fill data pointers and
-         * linesize accordingly.
-         * The allocated samples buffer can be freed by using av_freep(&audio_data[0])
-         * Allocated data will be initialized to silence.
-         */
-        ret=av_samples_alloc(convertData, nullptr,avCodecContext->channels,avCodecContext->frame_size,avCodecContext->sample_fmt,0);
-        if (ret<0){
-            LOGI("av_samples_alloc error");
-        }
+
         swrBufferSize=av_samples_get_buffer_size(nullptr,avCodecContext->channels,avCodecContext->frame_size,avCodecContext->sample_fmt,0);
         swrBuffer= static_cast<uint8_t *>(av_malloc(swrBufferSize));
 
@@ -331,17 +321,12 @@ void AudioEncoder::destroy() {
         swr_free(&swrContext);
         swrContext= nullptr;
     }
-    if (convertData!= nullptr){
-        av_freep(&convertData[0]);
-        free(convertData);
-    }
+
 
     if (swrFrame!= nullptr){
         av_frame_free(&swrFrame);
     }
-    if(samples!= nullptr){
-        av_freep(&samples);
-    }
+
     if (inputFrame!= nullptr){
         av_frame_free(&inputFrame);
     }

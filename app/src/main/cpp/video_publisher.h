@@ -62,6 +62,7 @@ protected:
     int mAudioSampleRate;
     int mAudioChannels;
 
+
     //是否已经写入了文件头
     bool mHeaderHasWrite= false;
 
@@ -78,8 +79,9 @@ protected:
     int64_t mCurVideoPacketPts=0;
 
     int64_t duration=0;
+    int64_t mVideoFrameCount=0;
 
-    AVOutputFormat* mAVOutputFormat;
+
     AVFormatContext* mAVFormatContext;
 
     OutputStream mVideoStream;

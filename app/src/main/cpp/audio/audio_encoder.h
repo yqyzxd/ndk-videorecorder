@@ -31,8 +31,8 @@ private:
     AVFrame* inputFrame;
     int nbSamples;
 
-    int bufferSize;
-    uint8_t* samples;
+   // int bufferSize;
+    //uint8_t* samples;
 
     int64_t mAudioNextPts;
 
@@ -42,9 +42,9 @@ private:
 
     //音频时长
     double duration;
-    double totalSWRTimeMills;
 
-    uint8_t** convertData;
+
+
 
     //录制时使用的通道数
     int mRecordChannels;
@@ -76,7 +76,7 @@ private:
     int allocAvFrame();
 
     int encodePacket();
-    void addADTSToPacket(uint8_t *buffer, int size);
+
 };
 
 

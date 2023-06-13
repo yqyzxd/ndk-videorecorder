@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,7 +94,9 @@ fun RecordScreen(
     cameraPreviewScheduler: CameraPreviewScheduler,
     onSelectSongClick: (NavResultCallback<String>) -> Unit
 ) {
+    val viewState by viewModel.state.collectAsState()
     RecordScreen(
+        state=viewState,
         curSong = curSong,
         onSongChange = onSongChange,
         modifier = modifier,
@@ -105,18 +108,19 @@ fun RecordScreen(
 
 @Composable
 fun RecordScreen(
+    state:RecordViewState,
     curSong: String,
     onSongChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     onClickRecord: () -> Unit,
     cameraPreviewScheduler: CameraPreviewScheduler,
-    onSelectSongClick: (NavResultCallback<String>) -> Unit
+    onSelectSongClick: (NavResultCallback<String>) -> Unit,
 ) {
 
 
 
     ConstraintLayout(modifier.fillMaxSize()) {
-        val (songBtn, switchBtn, surfaceView, recordBtn, musicPanel) = createRefs()
+        val (songBtn, switchBtn, surfaceView, recordBtn, musicPanel,recordingText) = createRefs()
 
         CameraView(cameraPreviewScheduler = cameraPreviewScheduler,
             modifier = Modifier
@@ -157,6 +161,14 @@ fun RecordScreen(
         }) {
             Text(text = "录制")
         }
+        if (state.formattedTime != ""){
+            Text(text = state.formattedTime,modifier= Modifier.constrainAs(recordingText){
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+                top.linkTo(parent.top, margin = 16.dp)
+            })
+        }
+
 
     }
 

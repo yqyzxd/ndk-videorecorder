@@ -4,6 +4,7 @@ package com.wind.ndk.video.recorder
 
 import android.Manifest
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,6 +20,7 @@ import com.wind.ndk.video.recorder.ui.theme.NdkvideorecorderTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         requestPermissions(arrayOf(Manifest.permission.CAMERA,Manifest.permission.RECORD_AUDIO)) {
             setContent {
                 NdkvideorecorderTheme {
