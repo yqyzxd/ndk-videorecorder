@@ -527,7 +527,7 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
         dstPkt.dts = pkt.dts;
         dstPkt.duration = pkt.duration;
         dstPkt.stream_index = pkt.stream_index;
-
+//音频流视频流必须调用av_packet_rescale_ts调整时间参数
         av_packet_rescale_ts(&dstPkt, ost.codecCtx->time_base, ost.st->time_base);
         logPacket(oc, &dstPkt);
         ret = av_interleaved_write_frame(oc, &dstPkt);
