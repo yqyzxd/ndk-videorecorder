@@ -313,9 +313,8 @@ int AudioEncoder::allocAvFrame() {
 
 void AudioEncoder::destroy() {
     if (swrBuffer!= nullptr){
-        av_freep(swrBuffer);
+        av_freep(&swrBuffer);
         swrBuffer= nullptr;
-        swrBufferSize=0;
     }
     if (swrContext!= nullptr){
         swr_free(&swrContext);

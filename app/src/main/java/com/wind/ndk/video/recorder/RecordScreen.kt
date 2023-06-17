@@ -162,7 +162,7 @@ fun RecordScreen(
             Text(text = "录制")
         }
         if (state.formattedTime != ""){
-            Text(text = state.formattedTime,modifier= Modifier.constrainAs(recordingText){
+            Text(color=Color.Red,text = state.formattedTime,modifier= Modifier.constrainAs(recordingText){
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
                 top.linkTo(parent.top, margin = 16.dp)

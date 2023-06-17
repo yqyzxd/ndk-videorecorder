@@ -61,7 +61,7 @@ class VideoRecordViewModel(
             mVideoRecorder.startRecord(
                 outputUri = h264File,
                 videoFrameRate = 24,
-                videoBitrate = 1280 * 720 * 2,
+                videoBitrate = 1280 * 720 * 4,
                 videoWidth = 720,
                 videoHeight = 1280,
                 audioBitrate = 64 * 1000,
