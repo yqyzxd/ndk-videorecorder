@@ -49,7 +49,7 @@ private:
     //录制时使用的通道数
     int mRecordChannels;
     //输出通道数
-    int mTargetChannels=2;
+    //int mTargetChannels=2;
     //采样率
     int mSampleRate;
     //码率

@@ -43,26 +43,25 @@ void PcmCollector::collect(short *data, int sizeInShort) {
     }
 
     int dataCursor = 0;
-    while (sizeInShort>0) {
-
+    int samplesCnt =sizeInShort;
+    while (samplesCnt>0) {
         if ((mBufferCursor+dataCursor) < mBufferSizeInShort) {
             //有剩余空间存放
             //memcpy 的第三个参数size单位是字节，而我们的数据是short类型，所以*2
             memcpy(mAudioBuffer+mBufferCursor, data+dataCursor, sizeInShort * 2);
-            mBufferCursor += sizeInShort;
-            dataCursor+=sizeInShort;
-            sizeInShort = 0;
+            mBufferCursor += samplesCnt;
+            dataCursor+=samplesCnt;
+            samplesCnt = 0;
         } else {
             int remainSize = mBufferSizeInShort - mBufferCursor;
             //剩余空间不够了
             memcpy(mAudioBuffer+mBufferCursor, data+dataCursor, remainSize * 2);
             mBufferCursor=mBufferSizeInShort;
-            sizeInShort -= remainSize;
+            samplesCnt -= remainSize;
             dataCursor+=remainSize;
             //insert to queue
             enqueue();
             mBufferCursor = 0;
-
         }
     }
 

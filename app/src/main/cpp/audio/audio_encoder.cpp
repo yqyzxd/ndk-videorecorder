@@ -21,7 +21,7 @@ int AudioEncoder::init(int bitRate, int recordChannels, int sampleRate, int bits
 
     this->mBitRate=bitRate;
     this->mRecordChannels=recordChannels;
-    this->mTargetChannels=2;
+    //this->mTargetChannels=2;
     this->mSampleRate=sampleRate;
 
 
@@ -48,43 +48,16 @@ void AudioEncoder::setAudioFrameProvider(AudioFrameProvider provider, void *ctx)
     this->mAudioFrameProviderCtx=ctx;
 }
 int AudioEncoder::encode() {
-    //LOGI("enter audio encoder encode");
     int64_t pts=0;
-    int actualSampleSizeInShort=mAudioFrameProvider((short *)(inputFrame->data[0]), nbSamples, mTargetChannels, &pts, mAudioFrameProviderCtx);
-    //LOGI("enter audio encoder actualSampleSizeInShort");
+    int actualSampleSizeInShort=mAudioFrameProvider((short *)(inputFrame->data[0]), nbSamples, mRecordChannels, &pts, mAudioFrameProviderCtx);
     if(actualSampleSizeInShort<=0){
         LOGI("provide audio frame error");
         return -1;
     }
-
-    //int sizePerChannel=actualSampleSizeInShort/mChannels;
-   // int sampleSizeInByte=actualSampleSizeInShort*2;
-
     int ret=encodePacket();
     return ret;
 }
-/*void AudioEncoder::encode(byte *buffer, int size) {
 
-    int bufferCursor=0;
-
-    while (size>=bufferSize-samplesCursor){
-        int copySize=bufferSize-samplesCursor;
-        memcpy(samples+samplesCursor,buffer+bufferCursor,copySize);
-        bufferCursor+=copySize;
-        size-=copySize;
-
-        long long beginEncodeTimestamp=currentTimeMills();
-        encodePacket();
-        totalEncodeTimeMills+=currentTimeMills()-beginEncodeTimestamp;
-        samplesCursor=0;
-    }
-
-    if (size>0){
-        memcpy(samples+samplesCursor,buffer+bufferCursor,size);
-        samplesCursor+=size;
-    }
-
-}*/
 
 int AudioEncoder::encodePacket() {
 
@@ -209,9 +182,9 @@ int AudioEncoder::allocAudioStream(const char *codecName) {
 
         swrContext=swr_alloc_set_opts(nullptr,
                                                   av_get_default_channel_layout(avCodecContext->channels),
-                                                  avCodecContext->sample_fmt,avCodecContext->sample_rate,
+                                                  AV_SAMPLE_FMT_S16,avCodecContext->sample_rate,
                                                   av_get_default_channel_layout(mRecordChannels),
-                                                  AV_SAMPLE_FMT_S16,
+                                      avCodecContext->sample_fmt,
                                                   mSampleRate,
                                                   0, nullptr
                                                   );

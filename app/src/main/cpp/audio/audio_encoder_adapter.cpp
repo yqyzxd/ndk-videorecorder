@@ -33,7 +33,7 @@ int AudioEncoderAdapter::init(int audioBitrate, int audioSampleRate, int audioCh
     this->mAudioSampleRate = audioSampleRate;
     this->mAudioChannels = audioChannels;
     /** iOS是1.0f Android是2.0f **/
-    mChannelRatio = 2.0f;
+   // mChannelRatio = 1.0f;
 
     mPacketBufferCursor=0;
     mPacketBufferSize=0;
@@ -123,7 +123,7 @@ int AudioEncoderAdapter::getAudioPacket() {
 	 * 在Android平台 录制是单声道的 经过音效处理之后是双声道 channelRatio 2
 	 * 在iOS平台 录制的是双声道的 是已经处理音效过后的 channelRatio 1
 	 */
-    mPacketBufferSize=pkt->size * mChannelRatio;
+    mPacketBufferSize=pkt->size /* *mChannelRatio*/;
     if (mPacketBuffer== nullptr){
         mPacketBuffer=new short[mPacketBufferSize];
     }
@@ -140,7 +140,7 @@ int AudioEncoderAdapter::cpyToSamples(short *samples, int samplesCursorInShort, 
     if (samplesCursorInShort == 0) {
 
         double duration =
-                mPacketBufferCursor * 1000.0f / (double) (mAudioSampleRate * mChannelRatio);
+                mPacketBufferCursor * 1000.0f / (double) (mAudioSampleRate /* * mChannelRatio*/);
         *pts = mPacketBufferPresentationTimeMillis + duration;
     }
     memcpy(samples + samplesCursorInShort, mPacketBuffer + mPacketBufferCursor,

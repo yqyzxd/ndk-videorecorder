@@ -39,7 +39,7 @@ private:
     int mAudioChannels;
     int mAudioBitrate;
     int mAudioSampleRate;
-    float mChannelRatio;
+    //float mChannelRatio;
 
 
     bool mRunning;
