@@ -3,7 +3,8 @@
 //
 
 #include "x264_parser.h"
-
+#include "../../utils/log.h"
+#define LOG_TAG "X264Parser"
 X264Parser::X264Parser() {
 
 }
@@ -31,6 +32,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
     startIndex = findStartCode(startIndex,startIndexSize, data, size, &outBodySize,&outStartIndexSize);
 
     int naluType = data[4] & (0x1f);
+    LOGE("naluType：%d",naluType);
     NALU *nalu = new NALU(naluType,data+4);
     nalu->startCodeLen=4;
     while (startIndex>0){
@@ -45,6 +47,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
         }
         //获取nalu type
         naluType = data[startIndex+outStartIndexSize] & (0x1f);
+        LOGE("naluType：%d",naluType);
         nalu=new NALU(naluType,data+startIndex+outStartIndexSize);
         nalu->startCodeLen=outStartIndexSize;
 
@@ -76,7 +79,7 @@ int X264Parser::findStartCode(int startIndex,int startIndexSize, uint8_t *data, 
     //判断index-1是否为0
     //int newIndex = startIndex + 3;
     *outStartIndexSize=data[index-1]==0?4:3;
-    int newIndex= data[index-1]==0? index-1:index;
+    int newIndex=data[index-1]==0? index-1:index;
     *outBodySize = newIndex - startIndex-startIndexSize;
     return newIndex;
 }

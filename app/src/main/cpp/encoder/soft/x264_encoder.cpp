@@ -118,7 +118,7 @@ int X264Encoder::encode(VideoFrame *frame) {
         //将数据拷贝到avFrame的buffer
         memcpy(mYUY2Frame->data[0], frame->buffer, frame->size);
 
-        //todo 将yuy2数据转换成yuv420P格式
+        //将yuy2数据转换成yuv420P格式
         //YUV格式在存储上存在两类布局：
         //Packed: 打包存储，放在一个数组中
         //Planar：平面模式，YUV三个分量分开存储在三个数组中
@@ -142,9 +142,9 @@ int X264Encoder::encode(VideoFrame *frame) {
         ret = avcodec_receive_packet(mAVCodecContext, mAvPacket);
         // LOGE("avcodec_send_frame return :%s", av_err2str(ret));
         if (ret >= 0) {
+            parseAndEnqueue();
 
-            // parseAndEnqueue();
-            AVPacket pkt = *mAvPacket;
+            /*AVPacket pkt = *mAvPacket;
             int nalu_type = (pkt.data[4] & 0x1F);
             bool isKeyFrame = false;
             byte *frameBuffer;
@@ -256,7 +256,7 @@ int X264Encoder::encode(VideoFrame *frame) {
             mVideoPacketPool->enqueueVideoPacket(
                     buildVideoPacket(frameBuffer, frameBufferSize, mAvPacket->pts, mAvPacket->pts,
                                      mAvPacket->dts, mAvPacket->duration));
-
+    */
         } else {
             LOGI("No Output Frame...");
         }
@@ -300,29 +300,29 @@ X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeMillis, int64_
 }
 
 void X264Encoder::parseAndEnqueue() {
-    // LOGE("Write packet %3ld (size=%5d)\n", mAvPacket->pts, mAvPacket->size);
+
     //fwrite(mAvPacket->data,1,mAvPacket->size,h264File);//生成h264文件
-    //LOGI("pkt : {%ld, %ld}", mAvPacket->pts, mAvPacket->dts);
-    VideoPacket *videoPacket = new VideoPacket();
-    videoPacket->buffer = mAvPacket->data;
-    videoPacket->size = mAvPacket->size;
-    //int presentationTimeMills = mAvPacket->pts;
-    videoPacket->timeMills = mAvPacket->pts;
-
-
-    //mux时重新去计算pts和dts
-    //videoPacket->pts=mAvPacket->pts;
-    //videoPacket->dts=mAvPacket->dts;
-    // mVideoPacketPool->enqueueVideoPacket(videoPacket);
-
 
 
     //解析mAvPacket->data h264数据
     std::vector<NALU *> *nalus = new std::vector<NALU *>();
     int ret = mX264Parser->parse(mAvPacket->data, mAvPacket->size, nalus);
+    //std::vector<NALUnit *> *nalunits = new std::vector<NALUnit *>();
+    //parseH264SpsPps(reinterpret_cast<uint8_t *>(mAvPacket->data), mAvPacket->size, nalunits);
+
     if (ret < 0) {
         LOGE("x264 parse error");
     } else {
+        /*std::vector<NALUnit *>::iterator it;
+        for (it = nalunits->begin(); it != nalunits->end(); it++) {
+            NALUnit* naluint=*it;
+
+            NALU* nalu=new NALU(naluint->naluType,naluint->naluBody);
+            nalu->size=naluint->naluSize;
+            nalus->push_back(nalu);
+        }*/
+
+
         byte *frameBuffer;
         const char headCode[] = "\x00\x00\x00\x01";
         int frameBufferSize = 0;

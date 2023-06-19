@@ -68,7 +68,7 @@ class VideoRecorder(
         nativeStopConsumer()
     }
 
-    private external fun nativeStopConsumer()
+
 
     private fun startProducer(
         videoFrameRate: Int,
@@ -111,6 +111,7 @@ class VideoRecorder(
 
     }
 
+
     private external fun nativeStartConsumer(
         outputUri: String,
         videoFrameRate: Int,
@@ -122,6 +123,6 @@ class VideoRecorder(
         audioChannels: Int
     ): Int
 
-
+    private external fun nativeStopConsumer()
 }
 

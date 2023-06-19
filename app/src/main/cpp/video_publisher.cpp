@@ -337,6 +337,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
         av_packet_rescale_ts(&pkt, ost.codecCtx->time_base, ost.st->time_base);
 
         //avcc格式h624码流 ([extradata]) | ([length] NALU) | ([length] NALU) | ...
+        //在x264_encoder中已经对每个nalu做了处理，所以实际上以下代码不会触发
         if(pkt.data[0] == 0x00 && pkt.data[1] == 0x00 &&
            pkt.data[2] == 0x00 && pkt.data[3] == 0x01){
             size -= 4;
