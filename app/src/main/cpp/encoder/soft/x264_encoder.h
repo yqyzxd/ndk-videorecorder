@@ -46,7 +46,7 @@ private:
 
     VideoPacket *buildVideoPacket(byte *buffer, int size, int64_t timeMillis,int64_t pts, int64_t dts,int64_t duration);
 
-     void parseAndEnqueue();
+     void parsePacketAndEnqueue();
 };
 
 

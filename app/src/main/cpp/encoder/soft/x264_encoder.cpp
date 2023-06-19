@@ -140,127 +140,9 @@ int X264Encoder::encode(VideoFrame *frame) {
     int ret = avcodec_send_frame(mAVCodecContext, mAVFrame);
     while (ret >= 0) {
         ret = avcodec_receive_packet(mAVCodecContext, mAvPacket);
-        // LOGE("avcodec_send_frame return :%s", av_err2str(ret));
         if (ret >= 0) {
-            parseAndEnqueue();
-
-            /*AVPacket pkt = *mAvPacket;
-            int nalu_type = (pkt.data[4] & 0x1F);
-            bool isKeyFrame = false;
-            byte *frameBuffer;
-            int frameBufferSize = 0;
-            const char bytesHeader[] = "\x00\x00\x00\x01";
-            size_t headerLength = 4; //string literals have implicit trailing '\0'
-            if (NALU_TYPE_SPS == nalu_type) {
-                //说明是关键帧
-                isKeyFrame = true;
-                //分离出sps pps
-                vector<NALUnit *> *units = new vector<NALUnit *>();
-                parseH264SpsPps(pkt.data, pkt.size, units);
-                if (!mAlreadyWriteSPS) {
-                    NALUnit *spsUnit = units->at(0);
-                    uint8_t *spsFrame = spsUnit->naluBody;
-                    int spsFrameLen = spsUnit->naluSize;
-                    NALUnit *ppsUnit = units->at(1);
-                    uint8_t *ppsFrame = ppsUnit->naluBody;
-                    int ppsFrameLen = ppsUnit->naluSize;
-                    //将sps、pps写出去
-                    int metaBuffertSize = headerLength + spsFrameLen + headerLength + ppsFrameLen;
-                    byte *metaBuffer = new byte[metaBuffertSize];
-                    memcpy(metaBuffer, bytesHeader, headerLength);
-                    memcpy(metaBuffer + headerLength, spsFrame, spsFrameLen);
-                    memcpy(metaBuffer + headerLength + spsFrameLen, bytesHeader, headerLength);
-                    memcpy(metaBuffer + headerLength + spsFrameLen + headerLength, ppsFrame,
-                           ppsFrameLen);
-                    //this->pushToQueue(metaBuffer, metaBuffertSize, presentationTimeMills, pkt.pts, pkt.dts);
-
-                    mVideoPacketPool->enqueueVideoPacket(
-                            buildVideoPacket(metaBuffer, metaBuffertSize, mAvPacket->pts,
-                                             mAvPacket->pts, mAvPacket->dts, mAvPacket->duration));
-
-                    mAlreadyWriteSPS = true;
-                }
-                vector<NALUnit *>::iterator i;
-                bool isFirstIDRFrame = true;
-                for (i = units->begin(); i != units->end(); ++i) {
-                    NALUnit *unit = *i;
-                    int naluType = unit->naluType;
-                    if (NALU_TYPE_SPS != naluType &&
-                        NALU_TYPE_PPS != naluType) {
-                        int idrFrameLen = unit->naluSize;
-                        frameBufferSize += headerLength;
-                        frameBufferSize += idrFrameLen;
-                    }
-                }
-                frameBuffer = new byte[frameBufferSize];
-                int frameBufferCursor = 0;
-                for (i = units->begin(); i != units->end(); ++i) {
-                    NALUnit *unit = *i;
-                    int naluType = unit->naluType;
-                    if (NALU_TYPE_SPS != naluType &&
-                        NALU_TYPE_PPS != naluType) {
-                        uint8_t *idrFrame = unit->naluBody;
-                        int idrFrameLen = unit->naluSize;
-                        //将关键帧分离出来
-                        memcpy(frameBuffer + frameBufferCursor, bytesHeader, headerLength);
-                        frameBufferCursor += headerLength;
-                        memcpy(frameBuffer + frameBufferCursor, idrFrame, idrFrameLen);
-                        frameBufferCursor += idrFrameLen;
-                        frameBuffer[frameBufferCursor - idrFrameLen - headerLength] =
-                                ((idrFrameLen) >> 24) & 0x00ff;
-                        frameBuffer[frameBufferCursor - idrFrameLen - headerLength + 1] =
-                                ((idrFrameLen) >> 16) & 0x00ff;
-                        frameBuffer[frameBufferCursor - idrFrameLen - headerLength + 2] =
-                                ((idrFrameLen) >> 8) & 0x00ff;
-                        frameBuffer[frameBufferCursor - idrFrameLen - headerLength + 3] =
-                                ((idrFrameLen)) & 0x00ff;
-                    }
-                    delete unit;
-                }
-                delete units;
-            } else {
-                //说明是非关键帧, 从Packet里面分离出来
-                isKeyFrame = false;
-                vector<NALUnit *> *units = new vector<NALUnit *>();
-                parseH264SpsPps(pkt.data, pkt.size, units);
-                vector<NALUnit *>::iterator i;
-                for (i = units->begin(); i != units->end(); ++i) {
-                    NALUnit *unit = *i;
-                    int nonIDRFrameLen = unit->naluSize;
-                    frameBufferSize += headerLength;
-                    frameBufferSize += nonIDRFrameLen;
-                }
-                frameBuffer = new byte[frameBufferSize];
-                int frameBufferCursor = 0;
-                for (i = units->begin(); i != units->end(); ++i) {
-                    NALUnit *unit = *i;
-                    uint8_t *nonIDRFrame = unit->naluBody;
-                    int nonIDRFrameLen = unit->naluSize;
-                    memcpy(frameBuffer + frameBufferCursor, bytesHeader, headerLength);
-                    frameBufferCursor += headerLength;
-                    memcpy(frameBuffer + frameBufferCursor, nonIDRFrame, nonIDRFrameLen);
-                    frameBufferCursor += nonIDRFrameLen;
-                    frameBuffer[frameBufferCursor - nonIDRFrameLen - headerLength] =
-                            ((nonIDRFrameLen) >> 24) & 0x00ff;
-                    frameBuffer[frameBufferCursor - nonIDRFrameLen - headerLength + 1] =
-                            ((nonIDRFrameLen) >> 16) & 0x00ff;
-                    frameBuffer[frameBufferCursor - nonIDRFrameLen - headerLength + 2] =
-                            ((nonIDRFrameLen) >> 8) & 0x00ff;
-                    frameBuffer[frameBufferCursor - nonIDRFrameLen - headerLength + 3] =
-                            ((nonIDRFrameLen)) & 0x00ff;
-                    delete unit;
-                }
-                delete units;
-            }
-//			LOGI("startCode is 0%d 0%d 0%d 0%d nalu_type is %d...", frameBuffer[0], frameBuffer[1], frameBuffer[2], frameBuffer[3], (frameBuffer[4] & 0x1F));
-            mVideoPacketPool->enqueueVideoPacket(
-                    buildVideoPacket(frameBuffer, frameBufferSize, mAvPacket->pts, mAvPacket->pts,
-                                     mAvPacket->dts, mAvPacket->duration));
-    */
-        } else {
-            LOGI("No Output Frame...");
+            parsePacketAndEnqueue();
         }
-        //av_free_packet(&pkt);
         av_packet_unref(mAvPacket);
 
     }
@@ -299,29 +181,18 @@ X264Encoder::buildVideoPacket(byte *buffer, int size, int64_t timeMillis, int64_
     return pkt;
 }
 
-void X264Encoder::parseAndEnqueue() {
+void X264Encoder::parsePacketAndEnqueue() {
 
     //fwrite(mAvPacket->data,1,mAvPacket->size,h264File);//生成h264文件
 
 
     //解析mAvPacket->data h264数据
     std::vector<NALU *> *nalus = new std::vector<NALU *>();
-    int ret = mX264Parser->parse(mAvPacket->data, mAvPacket->size, nalus);
-    //std::vector<NALUnit *> *nalunits = new std::vector<NALUnit *>();
-    //parseH264SpsPps(reinterpret_cast<uint8_t *>(mAvPacket->data), mAvPacket->size, nalunits);
+    int ret = mX264Parser->parse(reinterpret_cast<uint8_t *>(mAvPacket->data), mAvPacket->size, nalus);
 
     if (ret < 0) {
         LOGE("x264 parse error");
     } else {
-        /*std::vector<NALUnit *>::iterator it;
-        for (it = nalunits->begin(); it != nalunits->end(); it++) {
-            NALUnit* naluint=*it;
-
-            NALU* nalu=new NALU(naluint->naluType,naluint->naluBody);
-            nalu->size=naluint->naluSize;
-            nalus->push_back(nalu);
-        }*/
-
 
         byte *frameBuffer;
         const char headCode[] = "\x00\x00\x00\x01";

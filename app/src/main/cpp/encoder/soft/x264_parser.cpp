@@ -51,6 +51,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
         nalu=new NALU(naluType,data+startIndex+outStartIndexSize);
         nalu->startCodeLen=outStartIndexSize;
 
+        startIndexSize = outStartIndexSize;
         startIndex = findStartCode(startIndex,startIndexSize, data, size, &outBodySize,&outStartIndexSize);
     }
     if (nalu!= nullptr){
