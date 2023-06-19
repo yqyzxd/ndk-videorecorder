@@ -62,6 +62,13 @@ JNIEXPORT jint JNICALL Java_com_wind_ndk_camera_VideoRecorder_nativeStartConsume
 
 }
 
+JNIEXPORT void JNICALL Java_com_wind_ndk_camera_VideoRecorder_nativeRelease
+        (JNIEnv *, jobject){
+   if (videoConsumer){
+
+   }
+}
+
 #ifdef __cplusplus
 }
 #endif

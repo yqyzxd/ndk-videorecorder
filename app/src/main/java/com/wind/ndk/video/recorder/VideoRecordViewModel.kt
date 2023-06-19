@@ -105,6 +105,7 @@ class VideoRecordViewModel(
             mVideoRecorder.stop()
             mRecording = false
         }
+        mVideoRecorder.release()
         mHandler.removeCallbacksAndMessages(null)
     }
 

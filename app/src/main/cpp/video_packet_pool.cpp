@@ -6,15 +6,19 @@
 
 
 VideoPacketPool::VideoPacketPool() {
-    mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
-    mAudioFrameQueue = new LinkedBlockingQueue<AudioFrame *>();
-    mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
-    mTotalDiscardVideoPacketDuration=0;
+
     pthread_rwlock_init(&mRWLock, nullptr);
 }
 
 VideoPacketPool::~VideoPacketPool() {
     pthread_rwlock_destroy(&mRWLock);
+}
+
+void VideoPacketPool::initPool() {
+    mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
+    mAudioFrameQueue = new LinkedBlockingQueue<AudioFrame *>();
+    mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
+    mTotalDiscardVideoPacketDuration=0;
 }
 
 VideoPacketPool *VideoPacketPool::instance = new VideoPacketPool();
@@ -169,3 +173,9 @@ int VideoPacketPool::abortAudioPacketQueue() {
      return 0;
 }
 
+
+bool VideoPacketPool::dealloc() {
+    delete mVideoPktQueue;
+    delete mAudioPktQueue;
+    delete mAudioFrameQueue;
+}

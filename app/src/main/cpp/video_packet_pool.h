@@ -45,6 +45,11 @@ public:
 
     bool discardAudioFrame();
 
+
+    bool dealloc();
+
+
+
 private:
     BlockingQueue<VideoPacket*> *mVideoPktQueue = 0;
     VideoPacket* mCurVideoPacket=0;
@@ -61,6 +66,8 @@ private:
     int discardVideoGOP(int *countOfDiscardPackets, int *durationOfDiscardPackets);
 
     void recordDropVideoFrame(int discardDuration);
+
+    void initPool();
 };
 
 

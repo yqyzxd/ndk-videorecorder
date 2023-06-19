@@ -124,5 +124,10 @@ class VideoRecorder(
     ): Int
 
     private external fun nativeStopConsumer()
+    fun release() {
+        nativeRelease()
+    }
+
+    private external fun nativeRelease()
 }
 
