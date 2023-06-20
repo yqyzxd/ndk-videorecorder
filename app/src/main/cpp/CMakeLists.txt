@@ -31,7 +31,7 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        jni/com_wind_ndk_camera_CameraPreviewScheduler.cpp
+        camera_preview/com_wind_ndk_camera_CameraPreviewScheduler.cpp
         camera_preview/camera_preview_controller.cpp
         camera_preview/camera_filter.cpp
         camera_preview/preview_renderer.cpp
@@ -57,6 +57,13 @@ add_library( # Sets the name of the library.
         audio/com_wind_ndk_audio_recorder_PcmCollector.cpp
         audio/pcm_collector.cpp
         audio/audio_encoder_adapter.cpp
+
+        audio/player/com_wind_ndk_audio_player_AudioTrackPlayer.cpp
+        audio/player/audio_track_player.cpp
+        audio/player/audio_track_caller.cpp
+        audio/player/audio_decoder.cpp
+
+        utils/jni_caller.cpp
         )
 
 

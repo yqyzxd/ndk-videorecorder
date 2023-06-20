@@ -11,7 +11,6 @@
 #include "../../utils/log.h"
 #include "x264_parser.h"
 #include "../../video_packet_pool.h"
-#include "h264_util.h"
 extern "C"{
 #include "libavformat/avformat.h"
 #include "libavutil/opt.h"

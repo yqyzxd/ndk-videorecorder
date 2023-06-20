@@ -205,23 +205,7 @@ int VideoPublisher::openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream 
     return 0;
 }
 
-AVFrame *VideoPublisher::allocPicture(AVPixelFormat pix_fmt, int width, int height) {
-    AVFrame *picture = av_frame_alloc();
-    if (picture == nullptr) {
-        return nullptr;
-    }
-    picture->format = pix_fmt;
-    picture->width = width;
-    picture->height = height;
-    /* allocate the buffers for the frame data */
-    int ret = av_frame_get_buffer(picture, 0);
-    if (ret < 0) {
-        LOGE("av_frame_get_buffer error");
-        return nullptr;
-    }
 
-    return picture;
-}
 
 bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
     LOGI("enter writeVideoFrame");
@@ -490,16 +474,7 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
     return 0;
 }
 
-int64_t VideoPublisher::getVideoStreamTimeInSecs() {
-    //LOGI("mCurVideoPacketPts:%ld",mCurVideoPacketPts);
-    //return mCurVideoPacketPts / 1000.0f;
-    return mCurVideoPacketPts;
-}
 
-int64_t VideoPublisher::getAudioStreamTimeInSecs() {
-    //return mCurAudioPacketPts / 1000.0f;
-    return mCurAudioPacketPts;
-}
 
 int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
     LOGI("enter writeAudioFrame");
@@ -576,5 +551,9 @@ void VideoPublisher::closeStream() {
     //av_frame_free(&mVideoStream.tmpFrame);
     //sws_freeContext(mVideoStream.swsCtx);
     //swr_free(&mVideoStream.swrCtx);
+
+}
+
+void VideoPublisher::dealloc() {
 
 }

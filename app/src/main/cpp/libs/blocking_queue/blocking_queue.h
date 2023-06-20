@@ -8,6 +8,8 @@
 #include <climits>
 #include <pthread.h>
 #include "../lock/lock.h"
+#include "../../utils/is_ptr.h"
+
 #define LOG_TAG "BlockingQueue"
 template<class T>
 class BlockingQueue {
@@ -131,13 +133,21 @@ public:
         mLock->unlock();
         return 0;
     }
-    //todo 清空队列
+    //清空队列
     void flush() override{
         if (this->mAbort){
             return;
         }
         mLock->lock();
         this->mAbort=true;
+        Node<T>* node=head;
+        while (node!= nullptr){
+            Node<T>* next=node->next;
+            if (ISPTR(node->item)){
+                delete node->item;
+            }
+            node=next;
+        }
         head= nullptr;
         mCond->signal();
         mLock->unlock();

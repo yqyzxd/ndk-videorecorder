@@ -50,6 +50,13 @@ void VideoConsumer::run() {
     LOGI("VideoConsumer stop run");
 }
 
+
+int VideoConsumer::getVideoPacket(VideoPacket **packet) {
+   return mVideoPacketPool->getVideoPacket(packet);
+}
+int VideoConsumer::getAudioPacket(AudioPacket **packet) {
+    return mVideoPacketPool->getAudioPacket(packet);
+}
 void VideoConsumer::stop() {
     LOGE("enter VideoConsumer stop:%d",mStop);
     if (!mStop){
@@ -61,11 +68,19 @@ void VideoConsumer::stop() {
         join();
         LOGE("after VideoConsumer stop join");
     }
+}
 
-}
-int VideoConsumer::getVideoPacket(VideoPacket **packet) {
-   return mVideoPacketPool->getVideoPacket(packet);
-}
-int VideoConsumer::getAudioPacket(AudioPacket **packet) {
-    return mVideoPacketPool->getAudioPacket(packet);
+void VideoConsumer::dealloc() {
+    if (mVideoPacketPool!= nullptr){
+        mVideoPacketPool->dealloc();
+        delete mVideoPacketPool;
+        mVideoPacketPool= nullptr;
+    }
+
+    if (mPublisher!= nullptr){
+        mPublisher->dealloc();
+        delete mPublisher;
+        mPublisher= nullptr;
+    }
+
 }

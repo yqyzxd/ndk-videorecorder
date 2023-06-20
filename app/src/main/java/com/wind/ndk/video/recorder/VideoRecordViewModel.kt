@@ -76,6 +76,7 @@ class VideoRecordViewModel(
             mSecs = 0
             mInteractor(mSecs)
             mHandler.removeCallbacksAndMessages(null)
+            mVideoRecorder.release()
         }
 
     }

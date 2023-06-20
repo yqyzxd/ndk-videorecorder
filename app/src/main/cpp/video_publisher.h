@@ -11,7 +11,7 @@
 #include "audio/audio_frame.h"
 
 
-extern "C"{
+extern "C" {
 #include "libavformat/avformat.h"
 #include "libswresample/swresample.h"
 #include "libswscale/swscale.h"
@@ -19,36 +19,42 @@ extern "C"{
 #include "libavutil/timestamp.h"
 };
 
-typedef int (*VideoPacketProvider)(VideoPacket** pkt,void* ctx);
-typedef int (*AudioPacketProvider)(AudioPacket** pkt,void* ctx);
+typedef int (*VideoPacketProvider)(VideoPacket **pkt, void *ctx);
 
-typedef struct OutputStream{
-    AVStream* st;
+typedef int (*AudioPacketProvider)(AudioPacket **pkt, void *ctx);
+
+typedef struct OutputStream {
+    AVStream *st;
     AVCodecContext *codecCtx;
     /* pts of the next frame that will be generated */
     int64_t nextPts;
     int samplesCount;
-    AVFrame* avFrame;
-    AVFrame* tmpFrame;
+    AVFrame *avFrame;
+    AVFrame *tmpFrame;
 
-    SwsContext* swsCtx;
-    SwrContext* swrCtx;
-}OutputStream;
+    SwsContext *swsCtx;
+    SwrContext *swrCtx;
+} OutputStream;
 
 class VideoPublisher {
 public:
     VideoPublisher();
+
     ~VideoPublisher();
 
 
-    virtual int init(const char* outputUri,
-                     int videoFrameRate,int videoBitrate,int videoWidth,int videoHeight,
-                     int audioBitrate,int audioSampleRate,int audioChannels);
+    virtual int init(const char *outputUri,
+                     int videoFrameRate, int videoBitrate, int videoWidth, int videoHeight,
+                     int audioBitrate, int audioSampleRate, int audioChannels);
 
-     void setVideoPacketProvider(VideoPacketProvider provider,void* ctx);
-     void setAudioPacketProvider(AudioPacketProvider provider,void* ctx);
+    void setVideoPacketProvider(VideoPacketProvider provider, void *ctx);
+
+    void setAudioPacketProvider(AudioPacketProvider provider, void *ctx);
+
     int encode();
+
     int stop();
+    void dealloc();
 
 protected:
     const char *mOutputUri;
@@ -64,7 +70,7 @@ protected:
 
 
     //是否已经写入了文件头
-    bool mHeaderHasWrite= false;
+    bool mHeaderHasWrite = false;
 
     VideoPacketProvider mVideoProvider;
     void *mVideoProviderCtx;
@@ -73,44 +79,36 @@ protected:
     void *mAudioProviderCtx;
 
 
+    int64_t mCurAudioPacketPts = 0;
+    int64_t mCurVideoPacketPts = 0;
+
+    int64_t duration = 0;
+    int64_t mVideoFrameCount = 0;
 
 
-    int64_t mCurAudioPacketPts=0;
-    int64_t mCurVideoPacketPts=0;
-
-    int64_t duration=0;
-    int64_t mVideoFrameCount=0;
-
-
-    AVFormatContext* mAVFormatContext;
+    AVFormatContext *mAVFormatContext;
 
     OutputStream mVideoStream;
-    AVCodec* mVideoCodec;
+    AVCodec *mVideoCodec;
 
     OutputStream mAudioStream;
-    AVCodec* mAudioCodec;
+    AVCodec *mAudioCodec;
     AVBitStreamFilterContext *mAudioBSFC;
 
-    int addStream(OutputStream *outputStream, AVFormatContext* oc,AVCodec **codec, AVCodecID id,char* codecName);
+    int addStream(OutputStream *outputStream, AVFormatContext *oc, AVCodec **codec, AVCodecID id,
+                  char *codecName);
 
     int openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *dict);
 
-    AVFrame *allocPicture(AVPixelFormat format, int width, int height);
 
     bool writeVideoFrame(AVFormatContext *oc, OutputStream ost);
 
     void logPacket(AVFormatContext *os, AVPacket *pkt);
 
-
-
     void closeStream();
 
     int openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream *ost, AVDictionary *opt);
 
-
-    int64_t getVideoStreamTimeInSecs();
-
-    int64_t getAudioStreamTimeInSecs();
 
     int writeAudioFrame(AVFormatContext *oc, OutputStream ost);
 };

@@ -22,6 +22,7 @@ public:
     void run() override;
 
     void stop();
+    void dealloc();
 
 
     static int getVideoPacketCallback(VideoPacket** pkt,void* ctx);
