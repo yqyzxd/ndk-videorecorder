@@ -102,6 +102,13 @@ int VideoPacketPool::discardVideoGOP(int *countOfDiscardPackets, int *durationOf
 int VideoPacketPool::getVideoPacket(VideoPacket **packet) {
     return mVideoPktQueue->take(packet);
 }
+void VideoPacketPool::recordDropVideoFrame(int discardDuration) {
+
+    pthread_rwlock_wrlock(&mRWLock);
+    mTotalDiscardVideoPacketDuration+=discardDuration;
+    pthread_rwlock_unlock(&mRWLock);
+}
+
 
 int VideoPacketPool::getVideoPacketQueueSize() {
     return mVideoPktQueue->size();
@@ -123,13 +130,6 @@ bool VideoPacketPool::detectDiscardAudioFrame() {
     pthread_rwlock_unlock(&mRWLock);
 
     return ret;
-}
-
-void VideoPacketPool::recordDropVideoFrame(int discardDuration) {
-
-    pthread_rwlock_wrlock(&mRWLock);
-    mTotalDiscardVideoPacketDuration+=discardDuration;
-    pthread_rwlock_unlock(&mRWLock);
 }
 
 bool VideoPacketPool::discardAudioFrame() {
@@ -171,6 +171,24 @@ int VideoPacketPool::getAudioPacket(AudioPacket **packet) {
 int VideoPacketPool::abortAudioPacketQueue() {
      mAudioPktQueue->flush();
      return 0;
+}
+
+
+int VideoPacketPool::enqueueAccompanyFrame(AudioFrame *frame) {
+    return mAccompanyFrameQueue->put(frame);
+}
+
+int VideoPacketPool::getAccompanyFrameQueueSize() {
+    return mAccompanyFrameQueue->size();
+}
+
+int VideoPacketPool::abortAccompanyFrameQueue() {
+    mAccompanyFrameQueue->flush();
+    return 0;
+}
+
+int VideoPacketPool::getAccompanyFrame(AudioFrame **frame) {
+    return mAccompanyFrameQueue->take(frame);
 }
 
 

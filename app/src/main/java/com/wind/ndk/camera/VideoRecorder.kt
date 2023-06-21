@@ -20,6 +20,7 @@ class VideoRecorder(
     private val mAudioRecorder:AudioRecorder
     ) {
 
+
     private var mStop = false
     fun startRecord(
         outputUri: String,
@@ -46,6 +47,8 @@ class VideoRecorder(
             startProducer(
                 videoFrameRate, videoBitrate, videoWidth, videoHeight,audioBitrate,audioSampleRate,audioChannels
             )
+
+
         }
 
     }

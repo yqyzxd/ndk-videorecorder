@@ -29,6 +29,8 @@ int VideoConsumer::init(const char *outputUri, int videoFrameRate, int videoBitr
 
     mStop= false;
     mVideoPacketPool=VideoPacketPool::getInstance();
+    mVideoPacketPool->initPool();
+
     mPublisher=new VideoPublisher();
     mPublisher->setVideoPacketProvider(getVideoPacketCallback,this);
     mPublisher->setAudioPacketProvider(getAudioPacketCallback,this);

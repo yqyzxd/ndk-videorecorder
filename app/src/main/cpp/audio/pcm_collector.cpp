@@ -69,15 +69,15 @@ void PcmCollector::collect(short *data, int sizeInShort) {
 
 void PcmCollector::enqueue() {
     if (mBufferCursor>0){
-        AudioFrame* packet=new AudioFrame ;
+        AudioFrame* frame=new AudioFrame ;
 
         short* packetBuffer=new short[mBufferCursor];
         memcpy(packetBuffer,mAudioBuffer,mBufferCursor*sizeof(short));
 
-        packet->buffer=packetBuffer;
-        packet->size=mBufferCursor;
-        packet->position=currentTimeMills()-mStartTimeMillis;
-        mPool->enqueueAudioFrame(packet);
+        frame->buffer=packetBuffer;
+        frame->size=mBufferCursor;
+        frame->position=currentTimeMills()-mStartTimeMillis;
+        mPool->enqueueAudioFrame(frame);
         //LOGI("enqueueAudioFrame");
         //todo 检测时间戳，是否需要插入空数据
     }

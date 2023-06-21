@@ -15,6 +15,7 @@ AudioTrackPlayer::AudioTrackPlayer(JavaVM *vm, jobject jaudioTrack) {
     this->vm=vm;
     this->jaudioTrack=jaudioTrack;
 
+    mPool=VideoPacketPool::getInstance();
 
     mQueue = nullptr;
     mLock = nullptr;
@@ -164,6 +165,13 @@ int AudioTrackPlayer::readSamples(short *data, int size) {
                 mCurReadPos+=cpySize;
                 readedSize+=cpySize;
 
+                //插入到伴奏队列,供muxer使用
+                AudioFrame* accompanyFrame=new AudioFrame();
+                short* buf=new short[readedSize];
+                memcpy(buf,data,readedSize);
+                accompanyFrame->data=buf;
+                accompanyFrame->size=readedSize;
+                mPool->enqueueAccompanyFrame(accompanyFrame);
                 break;
             } else {
                 //本次AudioFrame不够

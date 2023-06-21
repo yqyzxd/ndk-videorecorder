@@ -21,6 +21,9 @@ public:
     ~VideoPacketPool();
     static VideoPacketPool* instance;//单例模式
 
+
+    void initPool();
+
     int enqueueVideoPacket(VideoPacket* packet);
     int getVideoPacketQueueSize();
     int abortVideoPacketQueue();
@@ -32,6 +35,11 @@ public:
     int getAudioFrameQueueSize();
     int abortAudioFrameQueue();
     int getAudioFrame(AudioFrame** packet);
+
+    int enqueueAccompanyFrame(AudioFrame* frame);
+    int getAccompanyFrameQueueSize();
+    int abortAccompanyFrameQueue();
+    int getAccompanyFrame(AudioFrame** frame);
 
 
     int enqueueAudioPacket(AudioPacket* packet);
@@ -55,6 +63,7 @@ private:
     VideoPacket* mCurVideoPacket=0;
 
     BlockingQueue<AudioFrame*> *mAudioFrameQueue = 0;
+    BlockingQueue<AudioFrame*> *mAccompanyFrameQueue = 0;
 
     BlockingQueue<AudioPacket*> *mAudioPktQueue = 0;
 
@@ -67,7 +76,7 @@ private:
 
     void recordDropVideoFrame(int discardDuration);
 
-    void initPool();
+
 };
 
 
