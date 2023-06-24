@@ -10,10 +10,12 @@ package com.wind.ndk.video.recorder
  *  <author> <time> <version> <desc>
  *
  */
-data class RecordViewState(val formattedTime:String){
+data class RecordViewState(
+    val song: String = "",
+    val formattedTime: String=""
+) {
 
-
-    companion object{
-        val Empty=RecordViewState("")
+    companion object {
+        val Empty = RecordViewState("", "")
     }
 }

@@ -129,12 +129,20 @@ int AudioEncoderAdapter::getAudioPacket() {
     }
     memcpy(mPacketBuffer,pkt->buffer,pkt->size*sizeof(short));
 
+    int actualSize=this->processAudio();
+    if (actualSize>0 && actualSize<mPacketBufferSize){
+        mPacketBufferCursor=mPacketBufferSize-actualSize;
+        memmove(mPacketBuffer+mPacketBufferCursor,mPacketBuffer,actualSize*sizeof(short));
+    }
 
     delete pkt;
     pkt= nullptr;
     return 0;
 }
 
+int AudioEncoderAdapter::processAudio() {
+    return mPacketBufferSize;
+}
 int AudioEncoderAdapter::cpyToSamples(short *samples, int samplesCursorInShort, int cpySizeInShort,
                                       int64_t *pts) {
     if (samplesCursorInShort == 0) {

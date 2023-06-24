@@ -19,18 +19,15 @@ public:
     AudioEncoderAdapter();
     ~AudioEncoderAdapter();
 
-    int init(int audioBitrate,int audioSampleRate, int audioChannels);
-
-
-
-
+    virtual int init(int audioBitrate,int audioSampleRate, int audioChannels);
     void run() override;
+    virtual void dealloc();
 
-    void dealloc();
 
     static int provideAudioFrameCallback(short* samples,int frameSize,int nbChannels,int64_t* pts,void* ctx);
     static int audioPacketCollector(AudioPacket* packet,void* ctx);
-private:
+
+protected:
     int mPacketBufferSize;
     short* mPacketBuffer;
     int mPacketBufferCursor;
@@ -47,6 +44,10 @@ private:
     AudioEncoder* mAudioEncoder;
 
     VideoPacketPool* mAudioPool;
+protected:
+    virtual void discardAudioPacket();
+    virtual int processAudio();
+
 private:
     int provideAudioFrame(short* samples,int frameSize,int nbChannels,int64_t* pts);
     int collectAudioPacket(AudioPacket* packet);
@@ -55,7 +56,7 @@ private:
 
     int cpyToSamples(short *samples, int samplesCursorInShort, int cpySizeInShort, int64_t *pts);
 
-    void discardAudioPacket();
+
 };
 
 

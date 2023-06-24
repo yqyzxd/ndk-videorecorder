@@ -22,10 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +34,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.wind.ndk.audio.player.AudioPlayer
 import com.wind.ndk.audio.recorder.AudioRecorder
 import com.wind.ndk.camera.CameraPreviewScheduler
 import com.wind.ndk.camera.VideoCamera
@@ -54,13 +52,16 @@ import com.wind.ndk.camera.VideoCamera
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
-    var song by rememberSaveable { mutableStateOf("") }
+
     val context = LocalContext.current
     val previewScheduler = remember(context) {
         CameraPreviewScheduler(VideoCamera(context as Activity))
     }
     val audioRecorder = remember(context) {
         AudioRecorder
+    }
+    val audioPlayer = remember(context) {
+        AudioPlayer.of(AudioPlayer.IMPL.AUDIO_TRACT)
     }
     val owner = LocalViewModelStoreOwner.current
     val defaultExtras =
@@ -70,15 +71,14 @@ fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
     val extras = MutableCreationExtras(defaultExtras).apply {
         set(VideoRecordViewModel.CAMERA_PREVIEW_KEY, previewScheduler)
         set(VideoRecordViewModel.AUDIO_RECORDER_KEY, audioRecorder)
-
+        set(VideoRecordViewModel.AUDIO_PLAYER_KEY, audioPlayer)
     }
 
     Scaffold { paddingValues ->
         RecordScreen(
             viewModel= viewModel(factory = VideoRecordViewModel.Factory, extras = extras),
-            curSong = song,
             modifier = Modifier.padding(paddingValues),
-            onSongChange = { song = it },
+
             cameraPreviewScheduler=previewScheduler,
             onSelectSongClick = onSelectSongClick,
         )
@@ -88,8 +88,7 @@ fun RecordScreen(onSelectSongClick: (NavResultCallback<String>) -> Unit) {
 @Composable
 fun RecordScreen(
     viewModel: VideoRecordViewModel,
-    curSong: String,
-    onSongChange: (String) -> Unit,
+
     modifier: Modifier = Modifier,
     cameraPreviewScheduler: CameraPreviewScheduler,
     onSelectSongClick: (NavResultCallback<String>) -> Unit
@@ -97,24 +96,25 @@ fun RecordScreen(
     val viewState by viewModel.state.collectAsState()
     RecordScreen(
         state=viewState,
-        curSong = curSong,
-        onSongChange = onSongChange,
+        onSongChange = viewModel::onSongChange,
         modifier = modifier,
         onClickRecord = viewModel::onClickRecord,
         cameraPreviewScheduler=cameraPreviewScheduler,
         onSelectSongClick = onSelectSongClick,
+        onClickPlayAccompany=viewModel::onClickPlayAccompany
     )
 }
 
 @Composable
 fun RecordScreen(
     state:RecordViewState,
-    curSong: String,
+   // curSong: String,
     onSongChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     onClickRecord: () -> Unit,
     cameraPreviewScheduler: CameraPreviewScheduler,
     onSelectSongClick: (NavResultCallback<String>) -> Unit,
+    onClickPlayAccompany:()->Unit,
 ) {
 
 
@@ -140,13 +140,13 @@ fun RecordScreen(
         }) {
             Text(text = "选歌")
         }
-        println("curSong:$curSong")
-        if (curSong != "") {
-            MusicPlayerPanel(curSong, modifier = Modifier.constrainAs(musicPanel) {
+
+        if (state.song != "") {
+            MusicPlayerPanel(state.song, modifier = Modifier.constrainAs(musicPanel) {
                 top.linkTo(songBtn.bottom, margin = 16.dp)
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
-            })
+            }, onClickPlayAccompany = onClickPlayAccompany, )
         }
         Button(onClick = { /*TODO*/ }, modifier = Modifier.constrainAs(switchBtn) {
             top.linkTo(parent.top, margin = 16.dp)
@@ -175,7 +175,7 @@ fun RecordScreen(
 }
 
 @Composable
-fun MusicPlayerPanel(song: String, modifier: Modifier = Modifier) {
+fun MusicPlayerPanel(song: String, modifier: Modifier = Modifier,onClickPlayAccompany:()->Unit) {
     Surface(
         color = Color.Cyan,
         modifier = modifier
@@ -190,7 +190,7 @@ fun MusicPlayerPanel(song: String, modifier: Modifier = Modifier) {
             Text(text = song)
 
             Row {
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = onClickPlayAccompany) {
                     Icon(imageVector = Icons.Outlined.PlayArrow, contentDescription = null)
                 }
             }

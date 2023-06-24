@@ -10,6 +10,7 @@
 #include "../video_packet_pool.h"
 #include "../utils/time.h"
 #include "audio_encoder_adapter.h"
+#include "audio_process_encoder_adapter.h"
 
 class PcmCollector {
 
@@ -22,7 +23,7 @@ public:
     void stop();
 private:
     VideoPacketPool* mPool;
-    AudioEncoderAdapter* mAudioEncoderAdapter;
+    AudioProcessEncoderAdapter* mAudioEncoderAdapter;
 
     int mAudioSampleRate=0;
     //每个packet的大小

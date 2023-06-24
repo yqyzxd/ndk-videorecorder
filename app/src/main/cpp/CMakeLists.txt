@@ -57,6 +57,8 @@ add_library( # Sets the name of the library.
         audio/com_wind_ndk_audio_recorder_PcmCollector.cpp
         audio/pcm_collector.cpp
         audio/audio_encoder_adapter.cpp
+        audio/audio_process_encoder_adapter.cpp
+        audio/merger/music_merger.cpp
 
         audio/player/com_wind_ndk_audio_player_AudioTrackPlayer.cpp
         audio/player/audio_track_player.cpp
@@ -64,6 +66,7 @@ add_library( # Sets the name of the library.
         audio/player/audio_decoder.cpp
 
         utils/jni_caller.cpp
+
         )
 
 

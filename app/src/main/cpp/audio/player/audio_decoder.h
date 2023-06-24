@@ -6,9 +6,9 @@
 #define NDK_AUDIOPLAYER_AUDIO_DECODER_H
 #include "../utils/log.h"
 #include "../utils/thread.h"
-#include "audio_frame.h"
 #include "../libs/blocking_queue/blocking_queue.h"
 #include "audio_metadata.h"
+#include "../audio_frame.h"
 
 extern "C"{
 #include "libavformat/avformat.h"

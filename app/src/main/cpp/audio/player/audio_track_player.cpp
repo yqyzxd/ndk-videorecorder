@@ -4,7 +4,7 @@
 
 #include "audio_track_player.h"
 
-#define LOG_TAG "AudioTrackPlayer"
+
 
 void AudioTrackPlayer::onAudioFrameAvailableCallback(void *ctx, AudioFrame *frame) {
     AudioTrackPlayer *player = static_cast<AudioTrackPlayer *>(ctx);
@@ -150,14 +150,14 @@ int AudioTrackPlayer::readSamples(short *data, int size) {
     while (readedSize<size) {
         if (mCurAudioFrame != nullptr) {
             int remainSize = mCurAudioFrame->size - mCurReadPos;
-            short *src = (short *) mCurAudioFrame->data;
+            short *src = (short *) mCurAudioFrame->buffer;
             if (remainSize >= (size-readedSize)) {
                 //本次够用
                 int cpySize =(size-readedSize);
                 memcpy(data + readedSize, src + mCurReadPos, cpySize * 2);
                 if (readedSize==cpySize){
                     mCurReadPos = 0;//重置readPosition
-                    delete []mCurAudioFrame->data;
+                    delete []mCurAudioFrame->buffer;
                     delete mCurAudioFrame;
                     mCurAudioFrame = nullptr;
                 }
@@ -169,7 +169,7 @@ int AudioTrackPlayer::readSamples(short *data, int size) {
                 AudioFrame* accompanyFrame=new AudioFrame();
                 short* buf=new short[readedSize];
                 memcpy(buf,data,readedSize);
-                accompanyFrame->data=buf;
+                accompanyFrame->buffer=buf;
                 accompanyFrame->size=readedSize;
                 mPool->enqueueAccompanyFrame(accompanyFrame);
                 break;
@@ -191,7 +191,7 @@ int AudioTrackPlayer::readSamples(short *data, int size) {
                 }
                 break;
             }
-            if (audioFrame == nullptr || audioFrame->data == nullptr) {
+            if (audioFrame == nullptr || audioFrame->buffer == nullptr) {
                 if (readedSize<=0){
                     readedSize=-1;
                 }

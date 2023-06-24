@@ -18,6 +18,7 @@ void VideoPacketPool::initPool() {
     mVideoPktQueue = new LinkedBlockingQueue<VideoPacket *>();
     mAudioFrameQueue = new LinkedBlockingQueue<AudioFrame *>();
     mAudioPktQueue = new LinkedBlockingQueue<AudioPacket *>();
+    mAccompanyFrameQueue = new LinkedBlockingQueue<AudioFrame *>();
     mTotalDiscardVideoPacketDuration=0;
 }
 
@@ -197,3 +198,4 @@ bool VideoPacketPool::dealloc() {
     delete mAudioPktQueue;
     delete mAudioFrameQueue;
 }
+

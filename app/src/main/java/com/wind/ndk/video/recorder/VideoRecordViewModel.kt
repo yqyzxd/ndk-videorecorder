@@ -10,12 +10,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.wind.ndk.audio.player.IAudioPlayer
 import com.wind.ndk.audio.recorder.AudioRecorder
 import com.wind.ndk.camera.CameraPreviewScheduler
 import com.wind.ndk.camera.VideoRecorder
+import com.wind.ndk.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.io.File
 
@@ -31,14 +32,18 @@ import java.io.File
  */
 class VideoRecordViewModel(
     private val mApp: Application,
-    private val mVideoRecorder: VideoRecorder
+    private val mVideoRecorder: VideoRecorder,
+    private val mAudioPlayer:IAudioPlayer,
 ) : AndroidViewModel(mApp) {
     private val mInteractor=RecordingTimeInteractor()
+    private val mSongInteractor=SongInteractor()
     private val mHandler = Handler(Looper.getMainLooper())
     private var mSecs = 0
 
-    val state: StateFlow<RecordViewState> = combine(mInteractor.flow){ args: Array<*> ->
-        RecordViewState(formattedTime=args[0] as String)
+    private var mAccompanyPlaying=false
+
+    val state: StateFlow<RecordViewState> = combine(mInteractor.flow,mSongInteractor.flow){ t1,t2 ->
+        RecordViewState(formattedTime=t1,song = t2)
     }
         .stateIn(
             scope = viewModelScope,
@@ -46,7 +51,10 @@ class VideoRecordViewModel(
             initialValue = RecordViewState.Empty,
         )
 
-
+    init {
+        mSongInteractor("")
+        mInteractor(0)
+    }
 
     private var mRecording = false
     fun onClickRecord() {
@@ -77,8 +85,28 @@ class VideoRecordViewModel(
             mInteractor(mSecs)
             mHandler.removeCallbacksAndMessages(null)
             mVideoRecorder.release()
+            mAudioPlayer.stop()
+            mAudioPlayer.release()
         }
 
+    }
+
+    fun onSongChange(song :String){
+        mSongInteractor(song)
+
+        mAudioPlayer.setDataSource("${mApp.getExternalFilesDir(null)?.absolutePath}/${song}")
+        mAudioPlayer.prepare()
+    }
+    fun onClickPlayAccompany(){
+        if (mRecording) {
+            if (!mAccompanyPlaying) {
+                mAudioPlayer.start()
+                mAccompanyPlaying = true
+            } else {
+                mAudioPlayer.pause()
+                mAccompanyPlaying = false
+            }
+        }
     }
 
     private fun startRecordingTimer() {
@@ -107,6 +135,10 @@ class VideoRecordViewModel(
             mRecording = false
         }
         mVideoRecorder.release()
+
+        mAudioPlayer.stop()
+        mAudioPlayer.release()
+
         mHandler.removeCallbacksAndMessages(null)
     }
 
@@ -121,12 +153,20 @@ class VideoRecordViewModel(
 
         @JvmField
         val AUDIO_RECORDER_KEY: CreationExtras.Key<AudioRecorder> = AudioRecorderKeyImpl
+
+
+        private object AudioPlayerKeyImpl : CreationExtras.Key<IAudioPlayer>
+
+        @JvmField
+        val AUDIO_PLAYER_KEY: CreationExtras.Key<IAudioPlayer> = AudioPlayerKeyImpl
+
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as Application
                 val cameraPreviewScheduler = this[CAMERA_PREVIEW_KEY] as CameraPreviewScheduler
                 val audioRecorder = this[AUDIO_RECORDER_KEY] as AudioRecorder
-                VideoRecordViewModel(app, VideoRecorder(cameraPreviewScheduler, audioRecorder))
+                val audioPlayer = this[AUDIO_PLAYER_KEY] as IAudioPlayer
+                VideoRecordViewModel(app, VideoRecorder(cameraPreviewScheduler, audioRecorder),audioPlayer)
             }
         }
     }

@@ -169,7 +169,7 @@ int AudioDecoder::decode() {
             AudioFrame *audioFrame = new AudioFrame();
 
             //因为format是AV_SAMPLE_FMT_S16，所以用short类型
-            audioFrame->data = (short*)dstData;
+            audioFrame->buffer = (short*)dstData;
             //short个数 注意memcpy时要乘以2，因为memcpy是字节个数
             audioFrame->size = dstSizeInShort;
 
