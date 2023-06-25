@@ -71,7 +71,7 @@ int AudioDecoder::prepare() {
 
         mSwrContext = swr_alloc_set_opts(nullptr,
                                          av_get_default_channel_layout(TARGET_NB_CHANNELS),
-                                         TARGET_SAMPLE_FMT, mAVCodecContext->sample_rate,
+                                         TARGET_SAMPLE_FMT, TARGET_SAMPLE_RATE,
                                          av_get_default_channel_layout(mAVCodecContext->channels),
                                          mAVCodecContext->sample_fmt, mAVCodecContext->sample_rate,
                                          0, 0
@@ -97,7 +97,7 @@ int AudioDecoder::prepare() {
 
 bool AudioDecoder::isTargetSampleFmt() {
     LOGI("mAVCodecContext->sample_fmt:%d",mAVCodecContext->sample_fmt);
-    return mAVCodecContext->sample_fmt == TARGET_SAMPLE_FMT && mAVCodecContext->channels == TARGET_NB_CHANNELS;
+    return mAVCodecContext->sample_fmt == TARGET_SAMPLE_FMT && mAVCodecContext->channels == TARGET_NB_CHANNELS && mAVCodecContext->sample_rate == TARGET_SAMPLE_RATE;
 }
 
 
@@ -123,9 +123,10 @@ int AudioDecoder::decode() {
                 //int nb_samples, enum AVSampleFormat sample_fmt, int align
 
                 int dst_nb_channels = TARGET_NB_CHANNELS;
-                int dst_nb_samples = mAVFrame->nb_samples;
-
-                //av_samples_get_buffer_size  = dst_nb_channels * dst_nb_samples* TARGET_SAMPLE_FMT
+                //int dst_nb_samples = mAVFrame->nb_samples;
+                int src_nb_samples=mAVFrame->nb_samples;
+                int dst_nb_samples = av_rescale_rnd(src_nb_samples,TARGET_SAMPLE_RATE,mAVCodecContext->sample_rate,AV_ROUND_UP);
+                        //av_samples_get_buffer_size  = dst_nb_channels * dst_nb_samples* TARGET_SAMPLE_FMT
                 dstSize = av_samples_get_buffer_size(nullptr, dst_nb_channels, dst_nb_samples,
                                                      TARGET_SAMPLE_FMT, 1);
                 if (dstSize < 0) {
