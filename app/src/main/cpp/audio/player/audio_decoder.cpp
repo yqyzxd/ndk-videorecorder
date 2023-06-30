@@ -97,7 +97,9 @@ int AudioDecoder::prepare() {
 
 bool AudioDecoder::isTargetSampleFmt() {
     LOGI("mAVCodecContext->sample_fmt:%d",mAVCodecContext->sample_fmt);
-    return mAVCodecContext->sample_fmt == TARGET_SAMPLE_FMT && mAVCodecContext->channels == TARGET_NB_CHANNELS && mAVCodecContext->sample_rate == TARGET_SAMPLE_RATE;
+    return mAVCodecContext->sample_fmt == TARGET_SAMPLE_FMT
+            && mAVCodecContext->channels == TARGET_NB_CHANNELS
+            && mAVCodecContext->sample_rate == TARGET_SAMPLE_RATE;
 }
 
 
@@ -249,7 +251,7 @@ int AudioDecoder::getAudioFrameSize() {
 
 AudioMetadata *AudioDecoder::getMetadata() {
     AudioMetadata *metadata = new AudioMetadata();
-    metadata->sampleRateInHz = mAVCodecContext->sample_rate;
+    metadata->sampleRateInHz =TARGET_SAMPLE_RATE ;//mAVCodecContext->sample_rate;
     metadata->bitRate = mAVCodecContext->bit_rate;
     metadata->bitsPerSample = 16;
     metadata->channelConfig = TARGET_NB_CHANNELS;

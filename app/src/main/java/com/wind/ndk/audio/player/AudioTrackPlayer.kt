@@ -82,7 +82,7 @@ class AudioTrackPlayer : IAudioPlayer {
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build()
             val channelMask =
-                if (channelConfig == 1) AudioFormat.CHANNEL_IN_MONO else AudioFormat.CHANNEL_IN_STEREO
+                if (channelConfig == 1) AudioFormat.CHANNEL_OUT_MONO else AudioFormat.CHANNEL_OUT_STEREO
 
             var encoding=AudioFormat.ENCODING_DEFAULT
             if (bitsPerSample == 16){
@@ -95,7 +95,7 @@ class AudioTrackPlayer : IAudioPlayer {
 
 
             val bufferSizeInBytes =
-                AudioTrack.getMinBufferSize(sampleRateInHz, channelConfig, encoding)
+                AudioTrack.getMinBufferSize(sampleRateInHz, channelMask, encoding)
             Log.d("AudioTrack","bufferSizeInBytes:${bufferSizeInBytes}")
             val format = AudioFormat.Builder()
                 .setSampleRate(sampleRateInHz)

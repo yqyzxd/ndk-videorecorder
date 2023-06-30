@@ -12,32 +12,55 @@ AudioProcessEncoderAdapter::~AudioProcessEncoderAdapter() noexcept {
 }
 
 int AudioProcessEncoderAdapter::init(int audioBitrate, int audioSampleRate, int audioChannels) {
-    int ret=AudioEncoderAdapter::init(audioBitrate,audioSampleRate,audioChannels);
-    if (ret<0){
+    int ret = AudioEncoderAdapter::init(audioBitrate, audioSampleRate, audioChannels);
+    if (ret < 0) {
         return -1;
     }
-    mAccompanyPool=VideoPacketPool::getInstance();
-    mMerger=new MusicMerger();
+    mAccompanyPool = VideoPacketPool::getInstance();
+    mMerger = new MusicMerger();
     return 0;
 }
+
 int AudioProcessEncoderAdapter::processAudio() {
-    int ret =mPacketBufferSize;
+    //int ret =mPacketBufferSize;
 
-    AudioFrame* accompanyFrame= nullptr;
-    if (mAccompanyPool->getAccompanyFrame(&accompanyFrame)<0){
-        return -1;
+    if (mAccompanyFrame == nullptr) {
+        if (mAccompanyPool->getAccompanyFrameQueueSize() > 0) {
+            if (mAccompanyPool->getAccompanyFrame(&mAccompanyFrame) < 0) {
+                return mPacketBufferSize;
+            }
+        }
     }
 
-    if (accompanyFrame!= nullptr){
-        LOGE("accompanyFrame->size:%d,audioFrame->size:%d",accompanyFrame->size,mPacketBufferSize);
-        ret= mMerger->mergeMusic(accompanyFrame->buffer,
-                            accompanyFrame->size,
-                            mPacketBuffer,
-                            mPacketBufferSize);
-        delete accompanyFrame;
-        accompanyFrame= nullptr;
+
+    if (mAccompanyFrame != nullptr) {
+        int audioSamplesCursor = 0;
+        int ret;//-2 means more
+        bool more = true;
+        while (more) {
+            ret = mMerger->mergeMusic(mAccompanyFrame->buffer,
+                                      mAccompanyFrame->size, &mAccompanyCursor,
+                                      mPacketBuffer,
+                                      mPacketBufferSize, &audioSamplesCursor);
+            LOGE("mAccompanyCursor:%d,audioSamplesCursor:%d", mAccompanyCursor, audioSamplesCursor);
+            more = (ret == -2);
+            if (more) {
+                if (mAccompanyPool->getAccompanyFrameQueueSize() > 0) {
+                    if (mAccompanyPool->getAccompanyFrame(&mAccompanyFrame) < 0) {
+                        more = false;
+                    }
+                }
+            } else {
+                mAccompanyCursor=0;
+                delete mAccompanyFrame;
+                mAccompanyFrame = nullptr;
+            }
+
+        }
+
+
     }
-    return ret;
+    return mPacketBufferSize;
 }
 
 void AudioProcessEncoderAdapter::discardAudioPacket() {
@@ -50,6 +73,7 @@ void AudioProcessEncoderAdapter::discardAudioPacket() {
         }
     }*/
 }
+
 void AudioProcessEncoderAdapter::dealloc() {
     AudioEncoderAdapter::dealloc();
 }

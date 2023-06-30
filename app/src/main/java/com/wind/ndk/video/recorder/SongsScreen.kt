@@ -19,7 +19,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
@@ -43,7 +42,7 @@ fun SongsScreen(onClickBack:()->Unit,onItemSelected:(String)->Unit) {
         }}
     )
     }) { paddingValues ->
-        val songs = listOf("131.mp3","踢出个未来", "总以为来日方长", "孤勇者", "天地龙鳞", "酒干倘卖无")
+        val songs = listOf("131.mp3","曲中人.mp3","踢出个未来.mp3", "总以为来日方长.mp3", "孤勇者.mp3", "天地龙鳞.mp3", "酒干倘卖无.mp3")
         LazyColumn(modifier = Modifier.padding(paddingValues)) {
             itemsIndexed(songs) { index, item ->
                 Item(index, item,onItemSelected)

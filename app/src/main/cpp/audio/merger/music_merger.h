@@ -11,7 +11,7 @@ public:
     MusicMerger();
     ~MusicMerger();
 
-    int mergeMusic(short* accompanySamples,int accompanySize,short* audioSamples,int audioSize);
+    int mergeMusic(short* accompanySamples,int accompanySize,int* accompanySamplesCursor,short* audioSamples,int audioSize,int* audioSamplesCursor);
 private:
     short mixSamples(short accompany, short audio);
 };

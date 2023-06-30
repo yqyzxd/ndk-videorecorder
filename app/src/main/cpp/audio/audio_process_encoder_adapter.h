@@ -23,6 +23,8 @@ protected:
 private:
     VideoPacketPool* mAccompanyPool;
     MusicMerger* mMerger;
+    AudioFrame* mAccompanyFrame;
+    int mAccompanyCursor;
 };
 
 
