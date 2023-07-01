@@ -107,36 +107,37 @@ void AudioEncoderAdapter::dealloc() {
 }
 
 int AudioEncoderAdapter::getAudioPacket() {
-    LOGI("before discardAudioPacket");
+    //LOGI("before discardAudioPacket");
     discardAudioPacket();
-    AudioFrame* pkt;
-    LOGI("before get audio packet");
-    int ret = mAudioPool->getAudioFrame(&pkt);
-    LOGI("after get audio packet:ret %d",ret);
+    AudioFrame* frame;
+    //LOGI("before get audio packet");
+    int ret = mAudioPool->getAudioFrame(&frame);
+    //LOGI("after get audio packet:ret %d",ret);
     if(ret<0){
         return -1;
     }
 
     mPacketBufferCursor=0;
-    mPacketBufferPresentationTimeMillis=pkt->position;
+    mPacketBufferPresentationTimeMillis=frame->position;
     /**
 	 * 在Android平台 录制是单声道的 经过音效处理之后是双声道 channelRatio 2
 	 * 在iOS平台 录制的是双声道的 是已经处理音效过后的 channelRatio 1
 	 */
-    mPacketBufferSize=pkt->size /* *mChannelRatio*/;
+    mPacketBufferSize=frame->size /* *mChannelRatio*/;
     if (mPacketBuffer== nullptr){
         mPacketBuffer=new short[mPacketBufferSize];
     }
-    memcpy(mPacketBuffer,pkt->buffer,pkt->size*sizeof(short));
+    memcpy(mPacketBuffer,frame->buffer,frame->size*sizeof(short));
 
-    int actualSize=this->processAudio();
-    if (actualSize>0 && actualSize<mPacketBufferSize){
+    //处理音频pcm数据，比如合并vocal和accompany
+    this->processAudio();
+    /*if (actualSize>0 && actualSize<mPacketBufferSize){
         mPacketBufferCursor=mPacketBufferSize-actualSize;
         memmove(mPacketBuffer+mPacketBufferCursor,mPacketBuffer,actualSize*sizeof(short));
-    }
+    }*/
 
-    delete pkt;
-    pkt= nullptr;
+    delete frame;
+    frame= nullptr;
     return 0;
 }
 

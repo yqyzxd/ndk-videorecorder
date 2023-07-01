@@ -150,25 +150,25 @@ int AudioTrackPlayer::readSamples(short *data, int size) {
     while (readedSize<size) {
         if (mCurAudioFrame != nullptr) {
             int remainSize = mCurAudioFrame->size - mCurReadPos;
-            short *src = (short *) mCurAudioFrame->buffer;
+            short *src = mCurAudioFrame->buffer;
             if (remainSize >= (size-readedSize)) {
                 //本次够用
                 int cpySize =(size-readedSize);
-                memcpy(data + readedSize, src + mCurReadPos, cpySize * 2);
-                if (readedSize==cpySize){
-                    mCurReadPos = 0;//重置readPosition
-                    delete []mCurAudioFrame->buffer;
+                memcpy(data + readedSize, src + mCurReadPos, cpySize * sizeof(short));
+                if (remainSize==cpySize){
+                    mCurReadPos = 0;
                     delete mCurAudioFrame;
                     mCurAudioFrame = nullptr;
+                } else{
+                    mCurReadPos+=cpySize;
                 }
 
-                mCurReadPos+=cpySize;
                 readedSize+=cpySize;
 
                 //插入到伴奏队列,供muxer使用
                 AudioFrame* accompanyFrame=new AudioFrame();
                 short* buf=new short[readedSize];
-                memcpy(buf,data,readedSize);
+                memcpy(buf,data,readedSize*sizeof(short));
                 accompanyFrame->buffer=buf;
                 accompanyFrame->size=readedSize;
                 mPool->enqueueAccompanyFrame(accompanyFrame);

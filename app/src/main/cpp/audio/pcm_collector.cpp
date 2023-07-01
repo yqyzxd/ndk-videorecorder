@@ -35,7 +35,8 @@ void PcmCollector::collect(short *data, int sizeInShort) {
     if (mStartTimeMillis==0){
         mStartTimeMillis= currentTimeMills();
         mAudioEncoderAdapter=new AudioProcessEncoderAdapter();
-        //int audioBitrate,int audioSampleRate, int audioChannels
+
+
         int audioBitrate=0;
         int recordAudioChannels=1;
         mAudioEncoderAdapter->init(audioBitrate,mAudioSampleRate,recordAudioChannels);

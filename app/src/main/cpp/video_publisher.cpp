@@ -208,11 +208,11 @@ int VideoPublisher::openVideo(AVFormatContext *oc, AVCodec *codec, OutputStream 
 
 
 bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
-    LOGI("enter writeVideoFrame");
+    //LOGI("enter writeVideoFrame");
     VideoPacket *packet;
 
     int ret = mVideoProvider(&packet, mVideoProviderCtx);
-    LOGI("after mVideoProvider: %d",ret);
+    //LOGI("after mVideoProvider: %d",ret);
     if (ret < 0) {
         return false;
     }
@@ -337,7 +337,7 @@ bool VideoPublisher::writeVideoFrame(AVFormatContext *oc, OutputStream ost) {
    // mCurVideoPacketPts = packet->timeMills;
     mCurVideoPacketPts = packet->pts;
     //LOGE("packet->timeMills:%ld",mCurVideoPacketPts);
-    logPacket(oc, &pkt);
+    //logPacket(oc, &pkt);
 
     LOGI("VideoFrames:%d",++mVideoFrameCount);
     ret = av_interleaved_write_frame(oc, &pkt);
@@ -477,7 +477,7 @@ int VideoPublisher::openAudio(AVFormatContext *oc, AVCodec *codec, OutputStream 
 
 
 int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
-    LOGI("enter writeAudioFrame");
+    //LOGI("enter writeAudioFrame");
     AudioPacket *packet;
     int ret = mAudioProvider(&packet, mAudioProviderCtx);
     if (ret < 0) {
@@ -505,7 +505,7 @@ int VideoPublisher::writeAudioFrame(AVFormatContext *oc, OutputStream ost) {
         dstPkt.stream_index = pkt.stream_index;
 //音频流视频流必须调用av_packet_rescale_ts调整时间参数
         av_packet_rescale_ts(&dstPkt, ost.codecCtx->time_base, ost.st->time_base);
-        logPacket(oc, &dstPkt);
+        //logPacket(oc, &dstPkt);
         ret = av_interleaved_write_frame(oc, &dstPkt);
 
         LOGE("audio av_interleaved_write_frame:%d",ret);

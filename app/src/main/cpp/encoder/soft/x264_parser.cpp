@@ -32,7 +32,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
     startIndex = findStartCode(startIndex,startIndexSize, data, size, &outBodySize,&outStartIndexSize);
 
     int naluType = data[4] & (0x1f);
-    LOGE("naluType：%d",naluType);
+    //LOGE("naluType：%d",naluType);
     NALU *nalu = new NALU(naluType,data+4);
     nalu->startCodeLen=4;
     while (startIndex>0){
@@ -47,7 +47,7 @@ int X264Parser::parse(uint8_t *data, int size,std::vector<NALU*>* nalus) {
         }
         //获取nalu type
         naluType = data[startIndex+outStartIndexSize] & (0x1f);
-        LOGE("naluType：%d",naluType);
+        //LOGE("naluType：%d",naluType);
         nalu=new NALU(naluType,data+startIndex+outStartIndexSize);
         nalu->startCodeLen=outStartIndexSize;
 

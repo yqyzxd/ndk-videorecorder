@@ -23,7 +23,7 @@ public:
     void stop();
 private:
     VideoPacketPool* mPool;
-    AudioProcessEncoderAdapter* mAudioEncoderAdapter;
+    AudioEncoderAdapter* mAudioEncoderAdapter;
 
     int mAudioSampleRate=0;
     //每个packet的大小

@@ -57,7 +57,7 @@ object AudioRecorder {
 
     }
 
-    fun getBufferSizeInShort() = mBufferSizeInBytes
+    fun getBufferSizeInShort() = mBufferSizeInShort
 
     fun start(){
         if (mAudioRecord?.state == AudioRecord.STATE_INITIALIZED){

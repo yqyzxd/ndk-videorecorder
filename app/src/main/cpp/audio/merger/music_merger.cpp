@@ -4,7 +4,9 @@
 
 #include "music_merger.h"
 #include "../../utils/types.h"
+#include "../../utils/log.h"
 
+#define LOG_TAG "MusicMerger"
 MusicMerger::MusicMerger(){
 
 }
@@ -12,8 +14,8 @@ MusicMerger::~MusicMerger() {
 
 }
 
-int MusicMerger::mergeMusic(short *accompanySamples, int accompanySize,int* accompanySamplesCursor, short *audioSamples,
-                            int audioSize,int* audioSamplesCursor) {
+int MusicMerger::mergeMusic(short *accompanySamples, int accompanySize,int* accompanySamplesCursor,
+                            short *audioSamples,int audioSize,int* audioSamplesCursor) {
 
     int ret=0;
     int accompanyRemainSize=accompanySize-*accompanySamplesCursor;
@@ -30,19 +32,23 @@ int MusicMerger::mergeMusic(short *accompanySamples, int accompanySize,int* acco
 
     }
 
+
     for (int i=0;i<mergeSize;i++){
-        short audio=audioSamples[*audioSamplesCursor+i];
-        short accompany=accompanySamples[*accompanySamplesCursor+i];
-        audioSamples[*audioSamplesCursor+i]=mixSamples(accompany,audio);
+        int audioPosition=*audioSamplesCursor+i;
+        short audio=audioSamples[audioPosition];
 
-        int newAccompanySamplesCursor=(*accompanySamplesCursor+1);
-        accompanySamplesCursor=&newAccompanySamplesCursor;
+        int accompanyPosition=*accompanySamplesCursor+i;
+        short accompany=accompanySamples[accompanyPosition];
+        audioSamples[audioPosition]=mixSamples(accompany,audio);
+        //audioSamples[audioPosition]=accompany;
 
-        int newAudioSamplesCursor=(*audioSamplesCursor+1);
-        audioSamplesCursor=&newAudioSamplesCursor;
     }
 
+    int newAccompanySamplesCursor=(*accompanySamplesCursor+mergeSize);
+    *accompanySamplesCursor=newAccompanySamplesCursor;
 
+    int newAudioSamplesCursor=(*audioSamplesCursor+mergeSize);
+    *audioSamplesCursor=newAudioSamplesCursor;
     return ret;
 }
 //音频混音 https://blog.csdn.net/u010164190/article/details/117691952
@@ -50,7 +56,7 @@ short MusicMerger::mixSamples(short a, short b) {
 
    // int aInt=(int)a;
    // int bInt=(int)b;
-    int tmp=a+b;
+    short tmp=(a+b)/2;
    /* if(a<0&&b<0){
          tmp=(aInt+bInt)- (aInt*bInt)/INT16_MIN;
     }
@@ -59,9 +65,11 @@ short MusicMerger::mixSamples(short a, short b) {
     }*/
 
     if(tmp>INT16_MAX){
+        LOGE("mixSamples>INT16_MAX");
        tmp= INT16_MAX;
     }
     if(tmp<INT16_MIN){
+        LOGE("mixSamples<INT16_MIN");
         tmp=INT16_MIN;
     }
     return tmp;

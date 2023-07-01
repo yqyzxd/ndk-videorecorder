@@ -68,10 +68,10 @@ int AudioEncoder::encodePacket() {
     //av_packet_alloc
     AVFrame* encodeFrame;
     if(swrContext){
-        LOGI("exist swrContext");
+        //LOGI("exist swrContext");
         const uint8_t** in=   (const uint8_t**)inputFrame->data;
         int ret=swr_convert(swrContext, &swrBuffer, avCodecContext->frame_size,
-                    in , avCodecContext->frame_size);
+                    in , inputFrame->nb_samples);
         if (ret<0){
             LOGE("swr_convert error return %d",ret);
             return -1;
@@ -81,6 +81,7 @@ int AudioEncoder::encodePacket() {
             //crash
             swrFrame->data[0][j]=(&swrBuffer)[0][j];
         }
+        //LOGE("swr_convert complete");
         encodeFrame=swrFrame;
     }else{
         encodeFrame=inputFrame;
@@ -113,7 +114,7 @@ int AudioEncoder::encodePacket() {
             pkt.pts= av_rescale_q(encodeFrame->pts,avCodecContext->time_base,timeBase);
         }
 
-        LOGI("avaudio:%ld,duration:%ld",pkt.pts,pkt.duration);
+        //LOGI("avaudio:%ld,duration:%ld",pkt.pts,pkt.duration);
         AudioPacket* outPacket=new AudioPacket();
         outPacket->data=new byte[pkt.size];
         memcpy(outPacket->data,pkt.data,pkt.size);
